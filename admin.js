@@ -15,6 +15,88 @@ const RESULT_SECTIONS = [
   ["promptImagem", "Prompt de imagem"],
 ];
 
+// Mesmo pipeline da edge function (supabase/functions/process-briefing), só que
+// aqui vira uma sequência de prompts pra colar manualmente num GPT qualquer,
+// sem depender de cota de API.
+const MODELOS_MENTAIS = `
+- Jobs to be Done: o que o cliente está "contratando" o produto/serviço para fazer
+- Primeiros princípios: quebrar o problema em verdades básicas e reconstruir dali
+- Golden Circle (Simon Sinek): por quê -> como -> o quê
+- Blue Ocean Strategy: onde criar espaço de mercado não disputado
+- Behavioral design / gatilhos comportamentais: o que motiva a ação do público
+`.trim();
+
+const VICIOS_IA = `
+- Evite frases de efeito genéricas ("no mundo dinâmico de hoje...")
+- Evite excesso de adjetivos vazios (incrível, revolucionário, único)
+- Evite listas artificiais quando um parágrafo corrido é mais natural
+- Prefira afirmações concretas e específicas a generalidades
+- Evite repetir a pergunta do usuário como abertura da resposta
+`.trim();
+
+function formatBriefingText(answers) {
+  return Object.entries(answers || {}).map(([q, a]) => `P: ${q}\nR: ${a}`).join("\n\n");
+}
+
+const MANUAL_STEPS = [
+  {
+    key: "modeloEscolhido", title: "1. Modelo mental escolhido",
+    build: ctx => ({
+      system: `Você analisa briefings de projeto e escolhe, entre os modelos mentais abaixo, o que melhor se aplica ao caso. Responda com o nome do modelo escolhido e 2-3 frases explicando por quê.\n\nModelos mentais disponíveis:\n${MODELOS_MENTAIS}`,
+      user: ctx.briefingText,
+    }),
+  },
+  {
+    key: "caminhos", title: "2. Caminhos estratégicos",
+    build: ctx => ({
+      system: "Você é um estrategista de projeto. A partir do briefing e do modelo mental escolhido, gere de 3 a 5 caminhos estratégicos distintos e viáveis. Para cada caminho, dê um nome curto e 2-3 frases de justificativa.",
+      user: `Briefing:\n${ctx.briefingText}\n\nModelo mental escolhido:\n${ctx.modeloEscolhido}`,
+    }),
+  },
+  {
+    key: "autocritica", title: "3. Autocrítica dos caminhos",
+    build: ctx => ({
+      system: "Você é um crítico exigente. Avalie os caminhos estratégicos abaixo: aponte fraquezas, riscos e sobreposições. Diga quais caminhos são fracos e por quê.",
+      user: ctx.caminhos,
+    }),
+  },
+  {
+    key: "caminhoFinal", title: "4. Caminho final refinado",
+    build: ctx => ({
+      system: "Com base nos caminhos propostos e na autocrítica recebida, escolha o melhor caminho (ou combine elementos de mais de um) e descreva-o de forma refinada e acionável, em um parágrafo.",
+      user: `Caminhos:\n${ctx.caminhos}\n\nAutocrítica:\n${ctx.autocritica}`,
+    }),
+  },
+  {
+    key: "persona", title: "5. Persona de redação",
+    build: ctx => ({
+      system: `Crie uma persona de redator(a): tom de voz, vocabulário típico e o que evitar, para escrever os textos deste projeto. Baseie-se no caminho estratégico escolhido. Siga rigorosamente estas regras de estilo (vícios de linguagem de IA a evitar):\n${VICIOS_IA}`,
+      user: ctx.caminhoFinal,
+    }),
+  },
+  {
+    key: "referenciasVisuais", title: "6. Referências visuais",
+    build: ctx => ({
+      system: "Você é um diretor de arte. A partir do briefing e do caminho estratégico escolhido, proponha referências visuais (estilos, paletas, texturas, exemplos de mercado) e explique como a equipe de design poderia usar essas referências.",
+      user: `Briefing:\n${ctx.briefingText}\n\nCaminho estratégico:\n${ctx.caminhoFinal}`,
+    }),
+  },
+  {
+    key: "promptImagem", title: "7. Prompt de imagem",
+    build: ctx => ({
+      system: "Escreva um prompt pronto para gerar uma imagem em uma ferramenta de IA (ex: Midjourney, DALL-E, Nano Banana), em inglês, detalhado e específico, com base nas referências visuais abaixo. Também escreva 1-2 frases em português explicando a intenção da imagem.",
+      user: ctx.referenciasVisuais,
+    }),
+  },
+];
+
+function manualDraftKey(id) { return `manualDraft:${id}`; }
+function loadManualDraft(id) {
+  try { return JSON.parse(localStorage.getItem(manualDraftKey(id))) || {}; } catch { return {}; }
+}
+function saveManualDraft(id, draft) { localStorage.setItem(manualDraftKey(id), JSON.stringify(draft)); }
+function clearManualDraft(id) { localStorage.removeItem(manualDraftKey(id)); }
+
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, c => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
@@ -186,6 +268,93 @@ function sectionBlock(title, content, index) {
   `;
 }
 
+function renderManualWizard(b) {
+  const draft = loadManualDraft(b.id);
+  const values = draft.values || {};
+  const briefingText = formatBriefingText(b.answers);
+  const ctx = { briefingText, ...values };
+  const stepIndex = MANUAL_STEPS.findIndex(s => !values[s.key]);
+  const doneCount = MANUAL_STEPS.length - (stepIndex === -1 ? 0 : MANUAL_STEPS.length - stepIndex);
+  const doneList = MANUAL_STEPS.filter(s => values[s.key])
+    .map(s => `<li><strong>${s.title}</strong> — resposta colada</li>`).join("");
+
+  let bodyHtml;
+  if (stepIndex === -1) {
+    bodyHtml = `
+      <p class="manual-hint">Todos os passos foram preenchidos. Salve para gravar esse resultado no briefing, do mesmo jeito que o processamento automático faria.</p>
+      <div class="manual-actions">
+        <button class="ghost-button" id="manualSaveButton" type="button">Salvar resultado no briefing</button>
+        <button class="text-button" id="manualBackButton" type="button">Refazer último passo</button>
+      </div>
+    `;
+  } else {
+    const step = MANUAL_STEPS[stepIndex];
+    const { system, user } = step.build(ctx);
+    const fullPrompt = `${system}\n\n---\n\n${user}`;
+    const copyIndex = copyTargets.length;
+    copyTargets[copyIndex] = fullPrompt;
+    bodyHtml = `
+      <p class="manual-hint">Copie o prompt abaixo, cole no seu GPT, e cole a resposta dele no campo abaixo.</p>
+      <div class="manual-prompt-box"><p class="manual-prompt-text">${nl2br(fullPrompt)}</p></div>
+      <div class="manual-actions">
+        <button class="copy-button" type="button" data-copy-index="${copyIndex}">Copiar prompt</button>
+        ${stepIndex > 0 ? `<button class="text-button" id="manualBackButton" type="button">Voltar ao passo anterior</button>` : ""}
+      </div>
+      <label class="manual-response-label">Resposta do GPT
+        <textarea id="manualResponseInput" rows="6" placeholder="Cole aqui a resposta..."></textarea>
+      </label>
+      <div class="manual-actions">
+        <button class="ghost-button" id="manualNextButton" type="button">Salvar resposta e gerar próximo prompt</button>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="detail-section manual-wizard">
+      <div class="detail-section-head">
+        <h3>Gerar manualmente (sem IA automática)</h3>
+        <span class="manual-progress">${doneCount} / ${MANUAL_STEPS.length}</span>
+      </div>
+      ${doneList ? `<ul class="manual-done-list">${doneList}</ul>` : ""}
+      ${bodyHtml}
+    </div>
+  `;
+}
+
+function manualSaveStep(id) {
+  const draft = loadManualDraft(id);
+  const values = draft.values || {};
+  const stepIndex = MANUAL_STEPS.findIndex(s => !values[s.key]);
+  if (stepIndex === -1) return;
+  const response = $("manualResponseInput").value.trim();
+  if (!response) { toast("Cole a resposta antes de continuar"); return; }
+  values[MANUAL_STEPS[stepIndex].key] = response;
+  saveManualDraft(id, { values });
+  renderDetail();
+}
+
+function manualGoBack(id) {
+  const draft = loadManualDraft(id);
+  const values = draft.values || {};
+  for (let i = MANUAL_STEPS.length - 1; i >= 0; i--) {
+    if (values[MANUAL_STEPS[i].key]) { delete values[MANUAL_STEPS[i].key]; break; }
+  }
+  saveManualDraft(id, { values });
+  renderDetail();
+}
+
+async function manualSaveResult(id) {
+  const draft = loadManualDraft(id);
+  const values = draft.values || {};
+  const result = {};
+  MANUAL_STEPS.forEach(s => { if (values[s.key]) result[s.key] = values[s.key]; });
+  const { error } = await client.from("briefings").update({ status: "pronto", result, error: null }).eq("id", id);
+  if (error) { toast("Erro ao salvar resultado"); return; }
+  clearManualDraft(id);
+  toast("Resultado salvo no briefing");
+  await loadBriefings();
+}
+
 function renderDetail() {
   const b = briefings.find(x => x.id === activeId);
   const detail = $("briefingDetail");
@@ -207,6 +376,7 @@ function renderDetail() {
       .map(([key, title], i) => sectionBlock(title, b.result[key], i + 1))
       .join("");
   }
+  const manualHtml = b.status === "pronto" ? "" : renderManualWizard(b);
 
   detail.innerHTML = `
     <div class="detail-header">
@@ -229,6 +399,7 @@ function renderDetail() {
       ${answersHtml}
     </div>
     ${resultHtml}
+    ${manualHtml}
   `;
   copyTargets[0] = answersText;
 
@@ -238,6 +409,12 @@ function renderDetail() {
   detail.querySelectorAll("[data-copy-index]").forEach(btn => {
     btn.addEventListener("click", () => copyText(copyTargets[Number(btn.dataset.copyIndex)] || ""));
   });
+  const manualNextButton = $("manualNextButton");
+  if (manualNextButton) manualNextButton.addEventListener("click", () => manualSaveStep(b.id));
+  const manualBackButton = $("manualBackButton");
+  if (manualBackButton) manualBackButton.addEventListener("click", () => manualGoBack(b.id));
+  const manualSaveButton = $("manualSaveButton");
+  if (manualSaveButton) manualSaveButton.addEventListener("click", () => manualSaveResult(b.id));
 }
 
 function parseBriefingMarkdown(text) {
