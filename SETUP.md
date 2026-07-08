@@ -8,7 +8,7 @@
 
 ## 2. Criar seu usuário admin (login do hub)
 Em **Authentication > Users**, clique em "Add user" e crie seu e-mail/senha manualmente
-(não precisa de fluxo de cadastro público — é só você).
+(não precisa de fluxo de cadastro público, é só você).
 
 ## 3. Deploy da Edge Function
 Precisa da [Supabase CLI](https://supabase.com/docs/guides/cli) instalada.
@@ -40,5 +40,5 @@ Depois rode `supabase functions deploy process-briefing` de novo.
   "Processando" e depois "Pronto" com o resultado da IA.
 
 ## Custo esperado
-Pipeline usa `gpt-5-nano` nas etapas intermediárias e `gpt-5-mini` na síntese final —
+Pipeline usa `gpt-5-nano` nas etapas intermediárias e `gpt-5-mini` na síntese final:
 o custo por briefing completo deve ficar bem abaixo de US$ 0,05.
