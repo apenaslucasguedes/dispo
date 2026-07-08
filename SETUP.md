@@ -16,7 +16,7 @@ Precisa da [Supabase CLI](https://supabase.com/docs/guides/cli) instalada.
 ```
 supabase login
 supabase link --project-ref SEU_PROJECT_REF
-supabase secrets set OPENAI_API_KEY=sk-...
+supabase secrets set GEMINI_API_KEY=AQ...
 supabase functions deploy process-briefing
 ```
 

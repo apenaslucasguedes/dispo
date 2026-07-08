@@ -4,14 +4,14 @@
 // e, em paralelo, o briefing visual/prompt de imagem.
 //
 // Segredos necessários (configurar com `supabase secrets set`):
-//   OPENAI_API_KEY
+//   GEMINI_API_KEY
 //   SUPABASE_URL            (já injetada automaticamente)
 //   SUPABASE_SERVICE_ROLE_KEY (já injetada automaticamente)
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const MODEL_RASCUNHO = "gpt-5-nano";   // caminhos, autocrítica, iteração interna
-const MODEL_FINAL = "gpt-5-mini";      // síntese final: persona + prompt de imagem
+const MODEL_RASCUNHO = "gemini-2.5-flash-lite";   // caminhos, autocrítica, iteração interna
+const MODEL_FINAL = "gemini-2.5-flash";           // síntese final: persona + prompt de imagem
 
 // TODO: cole aqui o conteúdo real da sua planilha de modelos mentais.
 const MODELOS_MENTAIS = `
@@ -32,21 +32,31 @@ const VICIOS_IA = `
 `.trim();
 
 async function callOpenAI(model: string, messages: { role: string; content: string }[]) {
-  const apiKey = Deno.env.get("OPENAI_API_KEY");
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
+  const apiKey = Deno.env.get("GEMINI_API_KEY");
+  const systemMessage = messages.find((m) => m.role === "system")?.content ?? "";
+  const userMessages = messages.filter((m) => m.role !== "system");
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: systemMessage }] },
+        contents: userMessages.map((m) => ({
+          role: m.role === "assistant" ? "model" : "user",
+          parts: [{ text: m.content }],
+        })),
+        generationConfig: { temperature: 0.7 },
+      }),
     },
-    body: JSON.stringify({ model, messages, temperature: 0.7 }),
-  });
+  );
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(`OpenAI error (${response.status}): ${text}`);
+    throw new Error(`Gemini error (${response.status}): ${text}`);
   }
   const data = await response.json();
-  return data.choices[0].message.content as string;
+  return data.candidates[0].content.parts[0].text as string;
 }
 
 function formatBriefing(answers: Record<string, string>) {
