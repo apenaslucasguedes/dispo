@@ -210,7 +210,8 @@ function renderInput(q) {
     $("sliderRightExamples").textContent = q.right.examples;
     $("sliderRightDesc").textContent = q.right.desc;
     const range = $("sliderRange");
-    range.value = state.answers[q.id] || 3;
+    if (state.answers[q.id] === undefined) { state.answers[q.id] = 3; persist(); }
+    range.value = state.answers[q.id];
     range.oninput = () => { state.answers[q.id] = Number(range.value); persist(); };
     if (q.note) {
       noteField.style.display = "block";

@@ -31,32 +31,48 @@ const VICIOS_IA = `
 - Evite repetir a pergunta do usuário como abertura da resposta
 `.trim();
 
+const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
+const MAX_ATTEMPTS = 4;
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function callOpenAI(model: string, messages: { role: string; content: string }[]) {
   const apiKey = Deno.env.get("GEMINI_API_KEY");
   const systemMessage = messages.find((m) => m.role === "system")?.content ?? "";
   const userMessages = messages.filter((m) => m.role !== "system");
 
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: systemMessage }] },
-        contents: userMessages.map((m) => ({
-          role: m.role === "assistant" ? "model" : "user",
-          parts: [{ text: m.content }],
-        })),
-        generationConfig: { temperature: 0.7 },
-      }),
-    },
-  );
-  if (!response.ok) {
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: systemMessage }] },
+          contents: userMessages.map((m) => ({
+            role: m.role === "assistant" ? "model" : "user",
+            parts: [{ text: m.content }],
+          })),
+          generationConfig: { temperature: 0.7 },
+        }),
+      },
+    );
+    if (response.ok) {
+      const data = await response.json();
+      return data.candidates[0].content.parts[0].text as string;
+    }
     const text = await response.text();
-    throw new Error(`Gemini error (${response.status}): ${text}`);
+    const isRetryable = RETRYABLE_STATUS.has(response.status);
+    if (!isRetryable || attempt === MAX_ATTEMPTS) {
+      throw new Error(`Gemini error (${response.status}): ${text}`);
+    }
+    const backoffMs = 1000 * 2 ** (attempt - 1) + Math.random() * 300;
+    console.error(`Gemini error (${response.status}), tentativa ${attempt}/${MAX_ATTEMPTS}, retry em ${Math.round(backoffMs)}ms`);
+    await sleep(backoffMs);
   }
-  const data = await response.json();
-  return data.candidates[0].content.parts[0].text as string;
+  throw new Error("Gemini error: esgotou tentativas");
 }
 
 function formatBriefing(answers: Record<string, string>) {
