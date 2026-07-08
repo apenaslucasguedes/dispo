@@ -75,8 +75,8 @@ function renderList() {
 
 function buildMarkdown(b) {
   const lines = [];
-  lines.push(`# Briefing — ${b.client_name || "Sem nome"}`);
-  lines.push(`_Recebido em ${new Date(b.created_at).toLocaleString("pt-BR")} — status: ${STATUS_LABELS[b.status] || b.status}_`);
+  lines.push(`# Briefing: ${b.client_name || "Sem nome"}`);
+  lines.push(`_Recebido em ${new Date(b.created_at).toLocaleString("pt-BR")}, status: ${STATUS_LABELS[b.status] || b.status}_`);
   lines.push("");
   lines.push("## Respostas do briefing");
   lines.push("");
@@ -240,6 +240,33 @@ function renderDetail() {
   });
 }
 
+function parseBriefingMarkdown(text) {
+  const titleMatch = text.match(/^#\s*Briefing:\s*(.+)$/m);
+  const clientName = titleMatch ? titleMatch[1].trim() : null;
+  const sectionMatch = text.match(/##\s*Respostas do briefing\s*\n([\s\S]*?)(?:\n##\s|$)/);
+  const answers = {};
+  if (sectionMatch) {
+    const entries = sectionMatch[1].trim().split(/\n(?=\*\*.+?\*\*\s*\n)/);
+    entries.forEach(entry => {
+      const m = entry.match(/^\*\*(.+?)\*\*\s*\n([\s\S]*)$/);
+      if (!m) return;
+      const question = m[1].trim();
+      const answer = m[2].trim();
+      if (question && answer) answers[question] = answer;
+    });
+  }
+  return { clientName: clientName && clientName !== "Sem nome" ? clientName : null, answers };
+}
+
+async function importMarkdownFile(file) {
+  const text = await file.text();
+  const { clientName, answers } = parseBriefingMarkdown(text);
+  if (!Object.keys(answers).length) { toast("Não foi possível ler respostas do arquivo"); return; }
+  const { error } = await client.from("briefings").insert({ answers, client_name: clientName });
+  if (error) { toast("Erro ao importar briefing"); return; }
+  toast("Briefing importado");
+}
+
 async function loadBriefings() {
   const { data, error } = await client.from("briefings").select("*").order("created_at", { ascending: false });
   if (error) return;
@@ -281,3 +308,9 @@ function toast(message) {
 $("loginButton").addEventListener("click", login);
 $("loginPassword").addEventListener("keydown", e => { if (e.key === "Enter") login(); });
 $("logoutButton").addEventListener("click", logout);
+$("importButton").addEventListener("click", () => $("importFileInput").click());
+$("importFileInput").addEventListener("change", async () => {
+  const file = $("importFileInput").files[0];
+  if (file) await importMarkdownFile(file);
+  $("importFileInput").value = "";
+});

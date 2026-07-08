@@ -93,7 +93,8 @@ button { cursor: pointer; }
 /* --- Hub --- */
 .hub-screen { min-height: 100vh; padding-bottom: 70px; }
 .hub-intro { padding: 40px var(--edge) 6px; }
-.hub-intro h1 { font-size: clamp(34px, 4.4vw, 54px); letter-spacing: -.03em; }
+.hub-intro h1 { font-size: clamp(34px, 4.4vw, 54px); letter-spacing: -.03em; margin: 0; }
+.hub-intro-row { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
 .hub-body { padding: 20px var(--edge) 0; display: grid; grid-template-columns: minmax(260px, 340px) 1fr; gap: 30px; align-items: start; }
 
 .briefing-list { display: flex; flex-direction: column; gap: 10px; max-height: 82vh; overflow-y: auto; }

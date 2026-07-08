@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f1eee7">
-  <title>Hub — Briefing Dispo</title>
+  <title>Hub · Briefing Dispo</title>
   <link rel="stylesheet" href="admin.css">
 </head>
 <body data-view="login">
@@ -15,7 +15,7 @@
       <a class="brand" href="#" aria-label="Dispo"><img src="logo-dispo.svg" alt="Dispo"></a>
     </header>
     <div class="login-card reveal">
-      <p class="eyebrow">Hub — acesso restrito</p>
+      <p class="eyebrow">Hub, acesso restrito</p>
       <h1>Entrar</h1>
       <label>E-mail<input type="email" id="loginEmail" autocomplete="username"></label>
       <label>Senha<input type="password" id="loginPassword" autocomplete="current-password"></label>
@@ -32,7 +32,11 @@
 
     <div class="hub-intro">
       <p class="eyebrow">Hub interno</p>
-      <h1>Briefings recebidos</h1>
+      <div class="hub-intro-row">
+        <h1>Briefings recebidos</h1>
+        <button class="ghost-button" id="importButton" type="button">Importar briefing (.md)</button>
+        <input type="file" id="importFileInput" accept=".md,text/markdown" hidden>
+      </div>
     </div>
 
     <div class="hub-body">

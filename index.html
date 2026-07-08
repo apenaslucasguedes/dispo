@@ -4,25 +4,27 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f1eee7">
-  <title>Briefing interativo — Dispo</title>
+  <title>Briefing interativo · Dispo</title>
   <meta name="description" content="Um briefing cuidadoso para dar forma ao seu próximo projeto.">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body data-view="intro">
   <div class="grain" aria-hidden="true"></div>
-  <div class="cosmos" id="cosmos" aria-hidden="true">
-    <div class="armillary">
-      <i class="arm-ring ring-equator"></i>
-      <i class="arm-ring ring-meridian-a"></i>
-      <i class="arm-ring ring-meridian-b"></i>
-      <i class="arm-ring ring-tropic-a"></i>
-      <i class="arm-ring ring-tropic-b"></i>
-      <i class="arm-ring ring-ecliptic"></i>
-      <i class="arm-axis"></i>
+  <div class="cosmos-clip" aria-hidden="true">
+    <div class="cosmos" id="cosmos">
+      <div class="armillary">
+        <i class="arm-ring ring-equator"></i>
+        <i class="arm-ring ring-meridian-a"></i>
+        <i class="arm-ring ring-meridian-b"></i>
+        <i class="arm-ring ring-tropic-a"></i>
+        <i class="arm-ring ring-tropic-b"></i>
+        <i class="arm-ring ring-ecliptic"></i>
+        <i class="arm-axis"></i>
+      </div>
     </div>
   </div>
   <header class="topbar">
-    <a class="brand" href="#" aria-label="Dispo — início">
+    <a class="brand" href="#" aria-label="Início Dispo">
       <img src="logo-dispo.svg" alt="Dispo">
     </a>
   </header>
@@ -46,7 +48,7 @@
     <section class="screen question-screen" id="questionScreen" aria-live="polite">
       <div class="progress-wrap">
         <div class="progress-meta">
-          <span id="sectionLabel">01 — Essencial</span>
+          <span id="sectionLabel">01 · Essencial</span>
           <span id="progressCount">01 / 01</span>
         </div>
         <div class="progress-track"><span id="progressBar"></span></div>
@@ -112,6 +114,13 @@
       <p class="eyebrow">Briefing enviado</p>
       <h2 id="completionTitle">Agora temos um bom lugar para começar.</h2>
       <p id="completionText">Suas respostas foram enviadas para processamento. A partir daqui, elas serão organizadas em uma direção visual para a criação da sua marca.</p>
+      <div class="completion-fallback" id="completionFallback" style="display:none">
+        <p>Não foi possível enviar automaticamente. Baixe suas respostas para não perder nada e nos envie por e-mail ou WhatsApp.</p>
+        <div class="completion-fallback-actions">
+          <button class="ghost-button" id="downloadAnswersButton" type="button">Baixar respostas (.md)</button>
+          <button class="ghost-button" id="retrySubmitButton" type="button">Tentar enviar novamente</button>
+        </div>
+      </div>
     </section>
   </main>
 

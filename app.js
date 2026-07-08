@@ -106,6 +106,7 @@ sections.forEach((section, sectionIndex) => {
 const state = { current: 0, answers: {}, started: false, completed: false };
 const $ = id => document.getElementById(id);
 const screens = [...document.querySelectorAll(".screen")];
+const mainEl = document.querySelector("main");
 let db;
 let saveTimer;
 let wheelTotal = 0;
@@ -115,7 +116,7 @@ function showScreen(id) {
   screens.forEach(screen => screen.classList.toggle("active", screen.id === id));
   const view = id === "introScreen" ? "intro" : id === "sectionScreen" ? "section" : id === "completionScreen" ? "complete" : "question";
   document.body.dataset.view = view;
-  window.scrollTo(0, 0);
+  mainEl.scrollTo(0, 0);
 }
 
 function openDatabase() {
@@ -377,6 +378,7 @@ function finish() {
   state.completed = true;
   persist();
   showScreen("completionScreen");
+  $("completionFallback").style.display = "none";
   submitBriefing();
 }
 
@@ -407,8 +409,9 @@ function formatAnswer(q) {
 }
 
 async function submitBriefing() {
+  if (state.submitted) return;
   const client = getSupabase();
-  if (!client || state.submitted) return;
+  if (!client) { $("completionFallback").style.display = "block"; return; }
   const readableAnswers = {};
   questions.forEach(q => {
     const formatted = formatAnswer(q);
@@ -416,10 +419,45 @@ async function submitBriefing() {
   });
   const clientName = state.answers.q1 || null;
   const { error } = await client.from("briefings").insert({ answers: readableAnswers, client_name: clientName });
-  if (error) { toast("Não foi possível enviar o briefing para a nuvem"); return; }
+  if (error) {
+    toast("Não foi possível enviar o briefing para a nuvem");
+    $("completionFallback").style.display = "block";
+    return;
+  }
   state.submitted = true;
   persist();
   toast("Briefing enviado para processamento");
+  $("completionFallback").style.display = "none";
+}
+
+function buildAnswersMarkdown() {
+  const clientName = state.answers.q1 || "Sem nome";
+  const lines = [`# Briefing: ${clientName}`, `_Respondido em ${new Date().toLocaleString("pt-BR")}_`, "", "## Respostas do briefing", ""];
+  questions.forEach(q => {
+    const formatted = formatAnswer(q);
+    if (!formatted) return;
+    lines.push(`**${q.text}**`, formatted, "");
+  });
+  return lines.join("\n").trim() + "\n";
+}
+
+function slugify(value) {
+  return String(value || "briefing")
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+}
+
+function downloadAnswers() {
+  const blob = new Blob([buildAnswersMarkdown()], { type: "text/markdown" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `briefing-${slugify(state.answers.q1) || "sem-nome"}.md`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  toast("Respostas baixadas");
 }
 
 function buildNav() {
@@ -470,6 +508,8 @@ document.querySelector(".brand").addEventListener("click", event => {
   showScreen("introScreen");
 });
 $("sectionContinue").addEventListener("click", () => { showScreen("questionScreen"); renderQuestion(); });
+$("downloadAnswersButton").addEventListener("click", downloadAnswers);
+$("retrySubmitButton").addEventListener("click", () => { toast("Reenviando..."); submitBriefing(); });
 $("nextButton").addEventListener("click", nextQuestion);
 $("backButton").addEventListener("click", previousQuestion);
 $("answerInput").addEventListener("input", () => { saveAnswer(); $("skipButton").textContent = hasAnswer(questions[state.current]) ? "Limpar resposta" : "Prefiro responder depois"; });
@@ -480,11 +520,10 @@ window.addEventListener("wheel", event => {
   const navigable = document.getElementById("questionScreen").classList.contains("active") || document.getElementById("sectionScreen").classList.contains("active");
   if (!navigable) return;
   if (event.target.closest(".choice-group, .slider-group, textarea")) return;
-  const doc = document.documentElement;
-  const scrollable = doc.scrollHeight > window.innerHeight + 2;
+  const scrollable = mainEl.scrollHeight > mainEl.clientHeight + 2;
   if (scrollable) {
-    const atBottom = window.scrollY + window.innerHeight >= doc.scrollHeight - 2;
-    const atTop = window.scrollY <= 2;
+    const atBottom = mainEl.scrollTop + mainEl.clientHeight >= mainEl.scrollHeight - 2;
+    const atTop = mainEl.scrollTop <= 2;
     if (event.deltaY > 0 && !atBottom) { wheelTotal = 0; return; }
     if (event.deltaY < 0 && !atTop) { wheelTotal = 0; return; }
   }
