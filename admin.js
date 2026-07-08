@@ -353,12 +353,14 @@ function renderManualWizard(b) {
     `;
   }
 
+  const progressPct = Math.round((doneCount / MANUAL_STEPS.length) * 100);
   return `
     <div class="detail-section manual-wizard">
       <div class="detail-section-head">
         <h3>Gerar manualmente (sem IA automática)</h3>
-        <span class="manual-progress">${doneCount} / ${MANUAL_STEPS.length}</span>
+        <span class="manual-progress">Passo ${Math.min(doneCount + 1, MANUAL_STEPS.length)} / ${MANUAL_STEPS.length}</span>
       </div>
+      <div class="manual-progress-track"><span style="width:${progressPct}%"></span></div>
       ${doneList ? `<ul class="manual-done-list">${doneList}</ul>` : ""}
       ${bodyHtml}
     </div>

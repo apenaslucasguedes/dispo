@@ -34,9 +34,21 @@ create policy "usuários autenticados podem excluir"
   to authenticated
   using (true);
 
--- Dispara a Edge Function toda vez que um novo briefing é inserido.
--- Configurar em Database > Webhooks no painel do Supabase:
---   Nome: process-briefing
---   Tabela: briefings
---   Evento: INSERT
---   Tipo: Edge Function -> process-briefing
+-- Trigger que dispara a Edge Function toda vez que um novo briefing é inserido.
+-- DESATIVADO em 2026-07-08: a cota gratuita do Gemini estourou (20 requisições/dia,
+-- 7 por briefing), então os briefings novos ficam parados em "recebido" e são
+-- processados manualmente pelo assistente de prompts no hub admin (admin.html).
+--
+-- create trigger process_briefing after insert on briefings
+--   for each row execute function supabase_functions.http_request(
+--     'https://SEU-PROJETO.supabase.co/functions/v1/process-briefing',
+--     'POST',
+--     '{"Content-type":"application/json","Authorization":"Bearer SEU_SERVICE_ROLE_KEY"}',
+--     '{}',
+--     '5000'
+--   );
+--
+-- Reative com (depois de resolver a cota/billing do Gemini):
+--   alter table briefings enable trigger process_briefing;
+-- Para desativar de novo:
+--   alter table briefings disable trigger process_briefing;
