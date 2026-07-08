@@ -29,7 +29,7 @@ const sections = [
   },
   {
     title: "Personalidade visual",
-    description: "Onde a marca se posiciona entre extremos — e o vocabulário que a define.",
+    description: "Onde a marca se posiciona entre extremos, e o vocabulário que a define.",
     questions: [
       { topic: "Palavras-chave", text: "Escolha até 5 palavras que combinam com a marca.", hint: "", type: "multi", limit: 5, options: ["Clara", "Elegante", "Afetiva", "Técnica", "Natural", "Urbana", "Premium", "Acessível", "Discreta", "Marcante", "Minimalista", "Detalhada", "Artesanal", "Digital", "Calma", "Intensa", "Tradicional", "Atual"], note: "Explique em uma frase as duas palavras mais importantes." },
       { topic: "Palavras a evitar", text: "Escolha até 5 palavras que não combinam com a marca.", hint: "", type: "multi", limit: 5, options: ["Infantil", "Fria", "Luxuosa demais", "Popular demais", "Genérica", "Datada", "Barulhenta", "Séria demais", "Divertida demais", "Técnica demais", "Romântica demais", "Colorida demais", "Minimalista demais", "Corporativa demais", "Improvisada"], note: "Alguma dessas palavras precisa ser evitada a qualquer custo?" },
@@ -71,7 +71,7 @@ const sections = [
     title: "Referências e limites",
     description: "O que admirar, o que evitar e o que fica fora de questão.",
     questions: [
-      { topic: "Referências", text: "Quais marcas você acha visualmente interessantes?", hint: "Pode ser marca de qualquer segmento. Para cada uma, escreva nome, link (se tiver) e o que você gosta nela — um item por linha.", type: "links" },
+      { topic: "Referências", text: "Quais marcas você acha visualmente interessantes?", hint: "Pode ser marca de qualquer segmento. Para cada uma, escreva nome, link (se tiver) e o que você gosta nela, um item por linha.", type: "links" },
       { topic: "Anti-referências", text: "Quais marcas ou estilos você quer evitar?", hint: "Ex.: “não quero parecer clínica popular”, “não gosto de marcas muito coloridas”, “não quero estética de Canva”, “não quero parecer igual aos concorrentes.”", type: "long" },
       { topic: "Limites visuais", text: "Existe alguma cor, símbolo ou elemento que você quer evitar?", hint: "Ex.: “evitar roxo porque lembra concorrente”, “não usar folha”, “não usar ícone de casa”, “não usar cruz de saúde.”", type: "long" },
       { topic: "Possibilidades", text: "Existe alguma cor, símbolo, objeto ou ideia que você gostaria de considerar?", hint: "Ex.: “tons terrosos”, “referência ao mar”, “algo ligado à cidade”, “um símbolo de proteção”, “texturas naturais.”", type: "long", optional: true }
@@ -224,7 +224,7 @@ function renderQuestion(direction = null) {
   if (!q) return finish();
   const section = sections[q.sectionIndex];
   const update = () => {
-    $("sectionLabel").textContent = `${String(q.sectionIndex + 1).padStart(2, "0")} — ${section.title}`;
+    $("sectionLabel").textContent = `${String(q.sectionIndex + 1).padStart(2, "0")} · ${section.title}`;
     $("progressCount").textContent = `${String(state.current + 1).padStart(2, "0")} / ${questions.length}`;
     $("progressBar").style.width = `${((state.current + 1) / questions.length) * 100}%`;
     $("questionNumber").textContent = String(state.current + 1).padStart(2, "0");
@@ -393,7 +393,7 @@ function formatAnswer(q) {
   let text = "";
   if (q.type === "slider") {
     if (value === undefined) return null;
-    text = `${value}/5 — ${q.left.label} (1) a ${q.right.label} (5)`;
+    text = `${value}/5 (${q.left.label} 1, ${q.right.label} 5)`;
   } else if (Array.isArray(value)) {
     if (!value.length) return null;
     text = value.join(", ");
@@ -449,7 +449,16 @@ function toast(message) {
 }
 
 $("startButton").addEventListener("click", () => {
-  if (state.completed) { showScreen("completionScreen"); return; }
+  if (state.completed) {
+    state.current = 0;
+    state.answers = {};
+    state.started = true;
+    state.completed = false;
+    state.submitted = false;
+    persist();
+    showSectionBreak(0);
+    return;
+  }
   if (state.started) { showScreen("questionScreen"); renderQuestion(); return; }
   state.started = true;
   persist();
