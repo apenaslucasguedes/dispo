@@ -103,7 +103,7 @@ sections.forEach((section, sectionIndex) => {
   });
 });
 
-const state = { current: 0, answers: {}, started: false, completed: false };
+const state = { current: 0, answers: {}, started: false, completed: false, chasingMissing: false };
 const $ = id => document.getElementById(id);
 const screens = [...document.querySelectorAll(".screen")];
 const mainEl = document.querySelector("main");
@@ -229,7 +229,9 @@ function renderQuestion(direction = null) {
     $("progressCount").textContent = `${String(state.current + 1).padStart(2, "0")} / ${questions.length}`;
     $("progressBar").style.width = `${((state.current + 1) / questions.length) * 100}%`;
     $("questionNumber").textContent = String(state.current + 1).padStart(2, "0");
-    $("topicLabel").textContent = q.topic;
+    $("topicLabel").innerHTML = q.optional
+      ? q.topic
+      : `${q.topic}<span class="required-mark" data-tooltip="Obrigatório" aria-label="Pergunta obrigatória">*</span>`;
     $("questionText").textContent = q.text;
     $("questionText").classList.toggle("long-heading", q.text.length > 45);
     $("questionHint").textContent = q.hint || "";
@@ -269,13 +271,25 @@ function goToQuestion(index) {
 function updateNextButtonState() {
   const button = $("nextButton");
   const isLast = state.current === questions.length - 1;
-  if (!isLast) {
-    button.classList.remove("is-incomplete");
+  const incomplete = firstMissingRequiredIndex() !== -1;
+
+  if (!state.chasingMissing && !isLast) {
+    button.classList.remove("is-incomplete", "is-complete");
     button.innerHTML = '<span class="btn-label">Continuar</span><span class="btn-icon">→</span>';
     return;
   }
-  const incomplete = firstMissingRequiredIndex() !== -1;
+
+  if (state.chasingMissing) {
+    button.classList.toggle("is-incomplete", incomplete);
+    button.classList.toggle("is-complete", !incomplete);
+    button.innerHTML = incomplete
+      ? '<span class="btn-label">Próxima pendência</span><span class="btn-icon">→</span>'
+      : '<span class="btn-label">Concluir</span><span class="btn-icon">→</span>';
+    return;
+  }
+
   button.classList.toggle("is-incomplete", incomplete);
+  button.classList.remove("is-complete");
   button.innerHTML = incomplete
     ? '<span class="btn-label">Completar respostas</span><span class="btn-icon">→</span>'
     : '<span class="btn-label">Concluir</span><span class="btn-icon">→</span>';
@@ -323,9 +337,25 @@ function saveAnswer() {
 
 function nextQuestion() {
   saveAnswer();
+  if (state.chasingMissing) {
+    const missingIndex = firstMissingRequiredIndex();
+    if (missingIndex !== -1) {
+      if (missingIndex === state.current) {
+        toast("Responda esta pergunta para continuar");
+        return;
+      }
+      goToQuestion(missingIndex);
+      toast("Responda as perguntas obrigatórias para concluir");
+      return;
+    }
+    state.chasingMissing = false;
+    persist();
+    return finish();
+  }
   if (state.current >= questions.length - 1) {
     const missingIndex = firstMissingRequiredIndex();
     if (missingIndex !== -1) {
+      state.chasingMissing = true;
       goToQuestion(missingIndex);
       toast("Responda as perguntas obrigatórias para concluir");
       return;
@@ -493,6 +523,7 @@ $("startButton").addEventListener("click", () => {
     state.started = true;
     state.completed = false;
     state.submitted = false;
+    state.chasingMissing = false;
     persist();
     showSectionBreak(0);
     return;

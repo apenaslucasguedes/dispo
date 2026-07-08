@@ -121,6 +121,15 @@ body[data-view="complete"] .cosmos { opacity: .5; right: -14vw; width: min(90vw,
 .question-card { width: min(1080px, 90vw); margin: clamp(30px, 6vh, 90px) auto 0; display: grid; grid-template-columns: 72px 1fr; gap: clamp(24px, 5vw, 76px); }
 .question-number { font: 700 18px var(--sans); color: var(--muted); padding-top: 10px; }
 .topic { font-size: 10px; text-transform: uppercase; letter-spacing: .13em; color: var(--muted); margin: 0 0 22px; }
+.required-mark { position: relative; display: inline-block; margin-left: 5px; top: -1px; color: #a32c22; font-size: 12px; cursor: default; }
+.required-mark::after {
+  content: attr(data-tooltip);
+  position: absolute; left: 50%; bottom: 100%; transform: translate(-50%, -6px);
+  background: var(--ink); color: var(--paper); font-size: 10px; letter-spacing: .04em; text-transform: none;
+  padding: 5px 9px; border-radius: 6px; white-space: nowrap;
+  opacity: 0; pointer-events: none; transition: opacity .18s ease, transform .18s ease;
+}
+.required-mark:hover::after { opacity: 1; transform: translate(-50%, -10px); }
 .question-content h2 { font: 700 clamp(38px, 4.6vw, 64px)/1.05 var(--sans); letter-spacing: -.03em; margin: 0; max-width: 960px; text-wrap: balance; }
 .question-content h2.long-heading { font-size: clamp(30px, 3.4vw, 46px); line-height: 1.14; max-width: 860px; }
 .hint { color: var(--muted); font-size: 13px; line-height: 1.5; min-height: 20px; margin: 18px 0 30px; }
@@ -167,6 +176,10 @@ textarea::placeholder { color: #aaa69d; }
 .next-button.is-incomplete::before { background: var(--paper); }
 .next-button.is-incomplete .btn-label, .next-button.is-incomplete .btn-icon { color: #fff; mix-blend-mode: normal; }
 .next-button.is-incomplete:hover .btn-label, .next-button.is-incomplete:hover .btn-icon { color: #a32c22; }
+.next-button.is-complete { background: #2f6b3f; border-color: #2f6b3f; }
+.next-button.is-complete::before { background: var(--paper); }
+.next-button.is-complete .btn-label, .next-button.is-complete .btn-icon { color: #fff; mix-blend-mode: normal; }
+.next-button.is-complete:hover .btn-label, .next-button.is-complete:hover .btn-icon { color: #2f6b3f; }
 .skip-button { color: var(--muted); font-size: 11px; text-decoration: underline; text-underline-offset: 4px; padding: 5px 0; transition: color .2s; }
 .skip-button:hover { color: var(--ink); }
 .keyboard-tip { position: fixed; left: 50%; bottom: 42px; transform: translateX(-50%); margin: 0; color: #918e85; font-size: 10px; z-index: 6; }
