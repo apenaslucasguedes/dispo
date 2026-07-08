@@ -29,6 +29,11 @@ create policy "usuários autenticados podem atualizar"
   to authenticated
   using (true);
 
+create policy "usuários autenticados podem excluir"
+  on briefings for delete
+  to authenticated
+  using (true);
+
 -- Dispara a Edge Function toda vez que um novo briefing é inserido.
 -- Configurar em Database > Webhooks no painel do Supabase:
 --   Nome: process-briefing

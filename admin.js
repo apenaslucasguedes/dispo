@@ -4,6 +4,11 @@ let briefings = [];
 let activeId = null;
 let channel;
 let copyTargets = [];
+const collapsedAnswers = new Set();
+
+const ICON_EDIT = `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 3.5l3 3L6 17H3v-3L13.5 3.5z"/></svg>`;
+const ICON_DELETE = `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h12M8 6V4h4v2M6 6l1 10h6l1-10"/></svg>`;
+const ICON_CHEVRON = `<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4.5L6 8l3.5-3.5"/></svg>`;
 
 const RESULT_SECTIONS = [
   ["modeloEscolhido", "Modelo mental escolhido"],
@@ -142,17 +147,56 @@ const STATUS_LABELS = { recebido: "Recebido", processando: "Processando", pronto
 
 function renderList() {
   $("briefingList").innerHTML = briefings.map(b => `
-    <button class="briefing-item ${b.id === activeId ? "active" : ""}" data-id="${b.id}">
-      <small>${new Date(b.created_at).toLocaleString("pt-BR")}</small>
-      <strong>${escapeHtml(b.client_name || "Briefing sem nome")}</strong>
-      <span class="status-badge status-${b.status}">${STATUS_LABELS[b.status] || b.status}</span>
-    </button>
+    <div class="briefing-item-wrap">
+      <button class="briefing-item ${b.id === activeId ? "active" : ""}" data-id="${b.id}">
+        <small>${new Date(b.created_at).toLocaleString("pt-BR")}</small>
+        <strong>${escapeHtml(b.client_name || "Briefing sem nome")}</strong>
+        <span class="status-badge status-${b.status}">${STATUS_LABELS[b.status] || b.status}</span>
+      </button>
+      <div class="item-actions">
+        <button class="icon-button" type="button" data-edit-id="${b.id}" aria-label="Editar nome" title="Editar nome">${ICON_EDIT}</button>
+        <button class="icon-button danger" type="button" data-delete-id="${b.id}" aria-label="Excluir" title="Excluir">${ICON_DELETE}</button>
+      </div>
+    </div>
   `).join("") || `<p class="empty-state">Nenhum briefing recebido ainda.</p>`;
   document.querySelectorAll(".briefing-item").forEach(el => el.addEventListener("click", () => {
     activeId = el.dataset.id;
     renderList();
     renderDetail();
   }));
+  document.querySelectorAll("[data-edit-id]").forEach(btn => btn.addEventListener("click", e => {
+    e.stopPropagation();
+    renameBriefing(btn.dataset.editId);
+  }));
+  document.querySelectorAll("[data-delete-id]").forEach(btn => btn.addEventListener("click", e => {
+    e.stopPropagation();
+    deleteBriefing(btn.dataset.deleteId);
+  }));
+}
+
+async function renameBriefing(id) {
+  const b = briefings.find(x => x.id === id);
+  if (!b) return;
+  const next = window.prompt("Novo nome do briefing:", b.client_name || "");
+  if (next === null) return;
+  const trimmed = next.trim();
+  const { error } = await client.from("briefings").update({ client_name: trimmed || null }).eq("id", id);
+  if (error) { toast("Erro ao renomear"); return; }
+  toast("Nome atualizado");
+  await loadBriefings();
+}
+
+async function deleteBriefing(id) {
+  const b = briefings.find(x => x.id === id);
+  if (!b) return;
+  const ok = window.confirm(`Excluir o briefing "${b.client_name || "sem nome"}"? Essa ação não pode ser desfeita.`);
+  if (!ok) return;
+  const { error } = await client.from("briefings").delete().eq("id", id);
+  if (error) { toast("Erro ao excluir"); return; }
+  if (activeId === id) activeId = null;
+  clearManualDraft(id);
+  toast("Briefing excluído");
+  await loadBriefings();
 }
 
 function buildMarkdown(b) {
@@ -377,6 +421,7 @@ function renderDetail() {
       .join("");
   }
   const manualHtml = b.status === "pronto" ? "" : renderManualWizard(b);
+  const answersCollapsed = collapsedAnswers.has(b.id);
 
   detail.innerHTML = `
     <div class="detail-header">
@@ -386,6 +431,7 @@ function renderDetail() {
         <p class="detail-meta"><span class="status-badge status-${b.status}">${STATUS_LABELS[b.status] || b.status}</span></p>
       </div>
       <div class="detail-toolbar">
+        <button class="ghost-button" id="editNameButton" type="button">Editar</button>
         <button class="ghost-button" id="copyMarkdownButton" type="button">Copiar Markdown</button>
         <button class="ghost-button" id="exportMarkdownButton" type="button">Baixar .md</button>
         <button class="ghost-button" id="exportPdfButton" type="button">Exportar PDF</button>
@@ -393,19 +439,28 @@ function renderDetail() {
     </div>
     <div class="detail-section">
       <div class="detail-section-head">
-        <h3>Respostas do briefing</h3>
+        <button class="detail-section-head-left" id="toggleAnswersButton" type="button">
+          <span class="section-toggle-icon${answersCollapsed ? " collapsed" : ""}">${ICON_CHEVRON}</span>
+          <h3>Respostas do briefing</h3>
+        </button>
         <button class="copy-button" type="button" data-copy-index="0">Copiar</button>
       </div>
-      ${answersHtml}
+      ${answersCollapsed ? "" : answersHtml}
     </div>
     ${resultHtml}
     ${manualHtml}
   `;
   copyTargets[0] = answersText;
 
+  $("editNameButton").addEventListener("click", () => renameBriefing(b.id));
   $("copyMarkdownButton").addEventListener("click", copyMarkdown);
   $("exportMarkdownButton").addEventListener("click", exportMarkdown);
   $("exportPdfButton").addEventListener("click", exportPdf);
+  $("toggleAnswersButton").addEventListener("click", () => {
+    if (collapsedAnswers.has(b.id)) collapsedAnswers.delete(b.id);
+    else collapsedAnswers.add(b.id);
+    renderDetail();
+  });
   detail.querySelectorAll("[data-copy-index]").forEach(btn => {
     btn.addEventListener("click", () => copyText(copyTargets[Number(btn.dataset.copyIndex)] || ""));
   });
