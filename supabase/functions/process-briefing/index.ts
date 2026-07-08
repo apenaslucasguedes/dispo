@@ -106,7 +106,7 @@ async function runDebriefingPipeline(briefingText: string) {
   const persona = await callOpenAI(MODEL_FINAL, [
     {
       role: "system",
-      content: `Crie uma persona de redator(a) — tom de voz, vocabulário típico, o que evitar — para escrever os textos deste projeto. Baseie-se no caminho estratégico escolhido. Siga rigorosamente estas regras de estilo (vícios de linguagem de IA a evitar):\n${VICIOS_IA}`,
+      content: `Crie uma persona de redator(a): tom de voz, vocabulário típico e o que evitar, para escrever os textos deste projeto. Baseie-se no caminho estratégico escolhido. Siga rigorosamente estas regras de estilo (vícios de linguagem de IA a evitar):\n${VICIOS_IA}`,
     },
     { role: "user", content: caminhoFinal },
   ]);
@@ -134,44 +134,38 @@ async function runVisualPipeline(briefingText: string, caminhoFinal: string) {
   return { referenciasVisuais, promptImagem };
 }
 
-Deno.serve(async (req) => {
+// Declaração mínima do global injetado pelo runtime de Edge Functions do Supabase.
+declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void };
+
+async function processBriefing(briefingId: string, answers: Record<string, string>) {
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+  );
   try {
-    const payload = await req.json();
-    const record = payload.record ?? payload; // suporta webhook do Supabase ou chamada direta
-    const briefingId = record.id;
-    const answers = record.answers as Record<string, string>;
-
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
-
     await supabase.from("briefings").update({ status: "processando" }).eq("id", briefingId);
 
     const briefingText = formatBriefing(answers);
-
-    const [debriefing, ] = await Promise.all([
-      runDebriefingPipeline(briefingText),
-    ]);
+    const debriefing = await runDebriefingPipeline(briefingText);
     const visual = await runVisualPipeline(briefingText, debriefing.caminhoFinal);
 
     await supabase
       .from("briefings")
       .update({ status: "pronto", result: { ...debriefing, ...visual } })
       .eq("id", briefingId);
-
-    return new Response(JSON.stringify({ ok: true }), { status: 200 });
   } catch (error) {
     console.error(error);
-    try {
-      const payload = await req.clone().json();
-      const record = payload.record ?? payload;
-      const supabase = createClient(
-        Deno.env.get("SUPABASE_URL")!,
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-      );
-      await supabase.from("briefings").update({ status: "erro", error: String(error) }).eq("id", record.id);
-    } catch { /* ignore secondary failure */ }
-    return new Response(JSON.stringify({ ok: false, error: String(error) }), { status: 500 });
+    await supabase.from("briefings").update({ status: "erro", error: String(error) }).eq("id", briefingId);
   }
+}
+
+Deno.serve(async (req) => {
+  const payload = await req.json();
+  const record = payload.record ?? payload; // suporta webhook do Supabase ou chamada direta
+
+  // O webhook do Supabase derruba a conexão após ~5s, mas o pipeline de IA leva bem
+  // mais que isso. Por isso respondemos 200 na hora e processamos em segundo plano.
+  EdgeRuntime.waitUntil(processBriefing(record.id, record.answers as Record<string, string>));
+
+  return new Response(JSON.stringify({ ok: true, queued: true }), { status: 200 });
 });
