@@ -1,0 +1,866 @@
+[
+  {
+    "categoria": "Pensar formal (lógico)",
+    "nome": "Silogismo Lógico",
+    "autor": "Aristóteles",
+    "periodo": "Grécia, séc. IV a.C.",
+    "descricao": "Deduzir conclusões a partir de premissas estruturadas.",
+    "perguntaOrigem": "“Liste as premissas válidas e derive a conclusão que necessariamente segue.”",
+    "prompt": "Liste premissas de forma clara e verificável, avalie sua consistência lógica e, a partir delas, deduza apenas a conclusão que decorre necessariamente, sem inserir suposições externas ou lacunas argumentativas, garantindo rigor, coerência e objetividade em todo o processo inferencial."
+  },
+  {
+    "categoria": "Pensar formal (lógico)",
+    "nome": "Método Dialético",
+    "autor": "Platão",
+    "periodo": "Grécia, séc. IV a.C.",
+    "descricao": "Progredir por tese, antítese e síntese.",
+    "perguntaOrigem": "“Qual é a tese? Qual antítese relevante? O que forma a síntese consistente?”",
+    "prompt": "Identifique a tese central, apresente a antítese que a contrasta de forma legítima e, com base na tensão entre ambas, formule uma síntese superior que integre verdades essenciais dos dois lados, eliminando contradições e produzindo um entendimento mais completo e consistente."
+  },
+  {
+    "categoria": "Pensar formal (lógico)",
+    "nome": "Método Euclidiano",
+    "autor": "Euclides",
+    "periodo": "Egito helenístico, séc. III a.C.",
+    "descricao": "Construir a partir de axiomas e provas sequenciais.",
+    "perguntaOrigem": "“Quais axiomas assumo e qual a sequência mínima de provas até o resultado?”",
+    "prompt": "Declare explicitamente os axiomas adotados, construa provas em sequência lógica mínima e suficiente, e avance apenas quando cada passo estiver validado, garantindo que o resultado final seja inevitável a partir das premissas fundamentais, sem brechas, atalhos ou suposições implícitas."
+  },
+  {
+    "categoria": "Pensar formal (lógico)",
+    "nome": "Dúvida Metódica",
+    "autor": "René Descartes",
+    "periodo": "França, séc. XVII",
+    "descricao": "Suspender crenças até restar o indubitável.",
+    "perguntaOrigem": "“O que permanece verdadeiro após duvidar sistematicamente de tudo?”",
+    "prompt": "Suspenda sistematicamente todas as crenças e suposições até que reste apenas o que não pode ser negado sem contradição, examinando cada afirmação com dúvida rigorosa e mantendo como verdadeiro somente aquilo que permanece indubitável após o teste extremo da razão."
+  },
+  {
+    "categoria": "Pensar formal (lógico)",
+    "nome": "Indução Sistemática",
+    "autor": "Francis Bacon",
+    "periodo": "Inglaterra, séc. XVII",
+    "descricao": "Generalizar a partir de observações controladas.",
+    "perguntaOrigem": "“Quais padrões empíricos estáveis emergem do conjunto de observações?”",
+    "prompt": "Observe o conjunto de dados de forma controlada, identifique padrões empíricos estáveis que se repetem sob condições semelhantes e formule generalizações que derivem diretamente dessas regularidades, evitando extrapolações sem suporte e garantindo que as conclusões reflitam a realidade observada."
+  },
+  {
+    "categoria": "Pensar formal (lógico)",
+    "nome": "Método Experimental Moderno",
+    "autor": "Galileu Galilei",
+    "periodo": "Itália, séc. XVII",
+    "descricao": "Testar hipóteses com mensuração e controle.",
+    "perguntaOrigem": "“Qual hipótese testável e qual experimento controlado a refuta ou corrobora?”",
+    "prompt": "Formule hipóteses claras e testáveis, defina variáveis mensuráveis e execute experimentos controlados que possam corroborar ou refutar cada hipótese de forma objetiva, priorizando resultados verificáveis e interpretação baseada em evidências, sem enviesamentos ou conclusões arbitrárias."
+  },
+  {
+    "categoria": "Pensar formal (lógico)",
+    "nome": "Heurística de Inversão",
+    "autor": "Carl Jacobi",
+    "periodo": "Alemanha, séc. XIX",
+    "descricao": "Resolver pensando no oposto do objetivo.",
+    "perguntaOrigem": "“Se eu quisesse obter o contrário, o que faria? Como evitar esses passos?”",
+    "prompt": "Considere o resultado oposto ao desejado, liste as ações ou condições que inevitavelmente levariam a esse fracasso e, então, inverta esse caminho: evite sistematicamente tais passos e projete estratégias que impeçam cada causa do insucesso, garantindo que suas escolhas aproximem você do objetivo verdadeiro."
+  },
+  {
+    "categoria": "Pensar formal (lógico)",
+    "nome": "Navalha de Ockham",
+    "autor": "Guilherme de Ockham",
+    "periodo": "Inglaterra, séc. XIV",
+    "descricao": "Preferir a explicação mais simples igualmente explicativa.",
+    "perguntaOrigem": "“Quais hipóteses redundantes posso remover sem perder poder explicativo?”",
+    "prompt": "Identifique todas as hipóteses envolvidas, elimine as redundantes ou desnecessárias que não acrescentem poder explicativo e mantenha apenas a estrutura mais simples que ainda explique todos os fatos relevantes com clareza e consistência, evitando complexidades gratuitas ou suposições extras."
+  },
+  {
+    "categoria": "Pensar formal (lógico)",
+    "nome": "Pensamento de Primeiro Princípio",
+    "autor": "Aristóteles / (aplic. moderna: Elon Musk)",
+    "periodo": "Antiguidade / séc. XXI",
+    "descricao": "Reduzir ao irredutível e recompor a solução.",
+    "perguntaOrigem": "“Quais elementos são irredutíveis aqui e como reconstruo a partir deles?”",
+    "prompt": "Decomponha o problema até seus elementos essenciais e irredutíveis, elimine tudo que não seja fundamental e, a partir desses blocos mínimos, reconstrua uma solução coerente, assegurando que cada componente acrescenta valor real sem redundâncias ou complexidades supérfluas."
+  },
+  {
+    "categoria": "Pensar formal (lógico)",
+    "nome": "Algoritmo de Eliminação",
+    "autor": "Estatística/Matemática (Coletivo)",
+    "periodo": "Moderno",
+    "descricao": "Reduzir opções descartando inconsistentes.",
+    "perguntaOrigem": "“Quais alternativas posso eliminar agora por contradição ou inviabilidade?”",
+    "prompt": "Liste todas as opções disponíveis, identifique rapidamente aquelas que apresentam contradições internas ou inviabilidade prática e descarte-as de imediato, mantendo foco apenas nas alternativas que permanecem consistentes com os objetivos e restrições, para acelerar decisões claras e racionais."
+  },
+  {
+    "categoria": "Pensar formal (lógico)",
+    "nome": "Lógica Proposicional",
+    "autor": "Estoicos (Zenão de Cítio) / formalizada por George Boole",
+    "periodo": "Antiguidade / séc. XIX",
+    "descricao": "Raciocínio baseado em proposições que podem ser verdadeiras ou falsas.",
+    "perguntaOrigem": "“Quais proposições são verdadeiras e que conclusões decorrem delas por operadores lógicos?”",
+    "prompt": "Identifique proposições com valor de verdade definido, determine quais são verdadeiras ou falsas e aplique operadores lógicos para derivar conclusões que decorram necessariamente dessas relações, mantendo a consistência formal e evitando qualquer inferência que não seja validada pela lógica proposicional."
+  },
+  {
+    "categoria": "Pensar formal (lógico)",
+    "nome": "Lógica de Predicados (Quantificação)",
+    "autor": "Gottlob Frege",
+    "periodo": "Alemanha, 1879",
+    "descricao": "Generalização da lógica proposicional usando quantificadores (“para todo”, “existe”).",
+    "perguntaOrigem": "“Posso expressar esta ideia como válido para todos os casos ou para ao menos um?”",
+    "prompt": "Expresse o raciocínio com quantificadores apropriados, distinguindo claramente o que é verdadeiro para todos os elementos de um conjunto e o que é válido para ao menos um caso, e derive conclusões rigorosas com base nessas condições, sem generalizar além do suporte lógico existente."
+  },
+  {
+    "categoria": "Pensar formal (lógico)",
+    "nome": "Raciocínio Indutivo por Analogia",
+    "autor": "Aristóteles (formalização moderna em Hesse, 1960s)",
+    "periodo": "Grécia Antiga / séc. XX",
+    "descricao": "Inferir conclusões transferindo relações de um domínio para outro.",
+    "perguntaOrigem": "“Qual outro caso tem estrutura semelhante que posso aplicar aqui?”",
+    "prompt": "Identifique um domínio com estrutura relacional semelhante ao problema atual, transfira cuidadosamente essas relações mantendo as correspondências válidas entre elementos e derive conclusões que se sustentem na analogia estrutural, evitando extrapolações que não preservem a lógica ou o contexto essencial."
+  },
+  {
+    "categoria": "Pensar formal (lógico)",
+    "nome": "Abdução (Raciocínio Hipotético)",
+    "autor": "Charles Sanders Peirce",
+    "periodo": "EUA, séc. XIX",
+    "descricao": "Propor a melhor hipótese para explicar fatos observados.",
+    "perguntaOrigem": "“Dada a evidência, qual hipótese plausível pode explicar melhor este fenômeno?”",
+    "prompt": "Analise a evidência disponível, gere hipóteses plausíveis e selecione aquela que melhor explica o fenômeno com menor número de suposições adicionais, garantindo consistência com todos os dados relevantes e mantendo abertura para revisão caso novas informações surjam."
+  },
+  {
+    "categoria": "Pensar formal (lógico)",
+    "nome": "Reductio ad Absurdum",
+    "autor": "Aristóteles / tradição matemática",
+    "periodo": "Grécia, séc. IV a.C.",
+    "descricao": "Demonstrar a verdade de uma proposição mostrando que sua negação leva ao absurdo.",
+    "perguntaOrigem": "“Se eu negar esta premissa, qual contradição ou absurdo resulta?”",
+    "prompt": "Negue temporariamente a proposição em análise e siga logicamente suas implicações até encontrar uma contradição ou consequência absurda; ao revelar que a negação é insustentável, conclua que a proposição original deve ser verdadeira com base na impossibilidade de seu oposto."
+  },
+  {
+    "categoria": "Pensar formal (lógico)",
+    "nome": "Dialética Tese–Antítese–Síntese",
+    "autor": "G.W.F. Hegel (desenvolvida a partir de Platão)",
+    "periodo": "Alemanha, séc. XIX",
+    "descricao": "Progresso do raciocínio pela superação de contradições.",
+    "perguntaOrigem": "“Qual é a tese, a oposição a ela e qual síntese supera ambas?”",
+    "prompt": "Identifique a tese central, explicite a oposição que a contradiz de forma legítima e conduza o confronto entre ambas até revelar tensões essenciais; a partir delas, formule uma síntese que preserve as verdades de cada lado, elimine as contradições e produza um entendimento superior, com implicações práticas e critérios claros para decisão e ação."
+  },
+  {
+    "categoria": "Pensar interno (cognitivo)",
+    "nome": "Maiêutica",
+    "autor": "Sócrates",
+    "periodo": "Grécia, séc. V a.C.",
+    "descricao": "Pensar por perguntas que levam o outro a descobrir sozinho.",
+    "perguntaOrigem": "“Quais perguntas posso fazer para que a resposta surja sem eu afirmá-la?”",
+    "prompt": "Formule perguntas estratégicas e direcionadas que estimulem o outro a refletir e construir a própria resposta, criando uma trilha de descobertas que dispensa afirmações diretas, ao mesmo tempo guiando o raciocínio para conclusões corretas de forma autônoma e consciente."
+  },
+  {
+    "categoria": "Pensar interno (cognitivo)",
+    "nome": "Método da Dúvida Sistemática",
+    "autor": "René Descartes (aplicado ao interior)",
+    "periodo": "França, séc. XVII",
+    "descricao": "Suspender crenças até restar apenas o indubitável.",
+    "perguntaOrigem": "“Se eu duvidar de cada crença, o que sobra como certeza mínima?”",
+    "prompt": "Suspenda cada crença e suposição de forma radical, elimine tudo que possa ser questionado e mantenha somente aquilo que permanece absolutamente certo mesmo sob dúvida extrema, garantindo que todo o raciocínio posterior se apoie apenas nesse núcleo indubitável e livre de ilusões ou pressupostos frágeis."
+  },
+  {
+    "categoria": "Pensar interno (cognitivo)",
+    "nome": "Método Feynman",
+    "autor": "Richard Feynman",
+    "periodo": "EUA, séc. XX",
+    "descricao": "Explicar de forma simples para revelar falhas no entendimento.",
+    "perguntaOrigem": "“Como eu explicaria isso para uma criança de 12 anos?”",
+    "prompt": "Reformule a ideia usando linguagem simples, exemplos concretos e lógica acessível a uma criança de 12 anos; se surgir dificuldade em explicar algum ponto, reconheça isso como sinal de entendimento incompleto e refine a compreensão até que tudo possa ser comunicado com clareza e sem ambiguidade."
+  },
+  {
+    "categoria": "Pensar interno (cognitivo)",
+    "nome": "Princípio da Atenção Plena (Mindfulness)",
+    "autor": "Siddharta Gautama (Buda)",
+    "periodo": "Índia, séc. V a.C.",
+    "descricao": "Focar no presente com consciência não-julgadora.",
+    "perguntaOrigem": "“O que estou percebendo neste instante sem interpretar?”",
+    "prompt": "Direcione total atenção ao que está acontecendo neste instante, observe sensações, pensamentos e estímulos sem rotulá-los ou julgá-los, e mantenha foco na experiência direta da realidade presente, sem se prender a interpretações, expectativas ou narrativas mentais."
+  },
+  {
+    "categoria": "Pensar interno (cognitivo)",
+    "nome": "Metacognição",
+    "autor": "John Flavell (psicologia cognitiva)",
+    "periodo": "EUA, 1976",
+    "descricao": "Pensar sobre o próprio pensar (auto-monitoramento).",
+    "perguntaOrigem": "“Quais processos mentais usei para chegar a esta conclusão?”",
+    "prompt": "Observe seus próprios processos mentais enquanto raciocina, identifique os passos, heurísticas e vieses utilizados para formar a conclusão e avalie se cada etapa foi lógica, fundamentada e necessária, ajustando o pensamento sempre que detectar falhas, atalhos ou pressupostos não examinados."
+  },
+  {
+    "categoria": "Pensar interno (cognitivo)",
+    "nome": "Chunking (Agrupamento Cognitivo)",
+    "autor": "George A. Miller",
+    "periodo": "EUA, 1956",
+    "descricao": "A mente organiza informação em blocos para memória.",
+    "perguntaOrigem": "“Como posso agrupar esses elementos em 7±2 blocos significativos?”",
+    "prompt": "Agrupe os elementos em conjuntos pequenos e significativos, idealmente entre cinco e nove blocos, buscando padrões, relações ou categorias naturais que facilitem retenção e manipulação mental, sem sobrecarregar a memória e preservando a clareza do conteúdo."
+  },
+  {
+    "categoria": "Pensar interno (cognitivo)",
+    "nome": "Raciocínio Contrafactual Interno",
+    "autor": "John Stuart Mill (precursor) / Psicologia moderna",
+    "periodo": "Inglaterra, séc. XIX / séc. XX",
+    "descricao": "Imaginar cenários alternativos para avaliar decisões.",
+    "perguntaOrigem": "“E se eu tivesse feito diferente, que resultado surgiria?”",
+    "prompt": "Projete cenários alternativos modificando decisões-chave, avalie as consequências prováveis de cada variação e use essas simulações mentais para comparar caminhos, identificar riscos e oportunidades ocultas e, então, escolher a opção que maximize resultados desejados e minimize arrependimentos futuros."
+  },
+  {
+    "categoria": "Pensar interno (cognitivo)",
+    "nome": "Pensamento por Analogias",
+    "autor": "Douglas Hofstadter / raízes em Aristóteles",
+    "periodo": "EUA, séc. XX",
+    "descricao": "Transferir estrutura de um domínio para outro.",
+    "perguntaOrigem": "“Qual outro domínio tem a mesma estrutura desse problema?”",
+    "prompt": "Identifique outro domínio que compartilhe a mesma estrutura fundamental do problema atual, estabeleça correspondências claras entre seus elementos e relações e transfira o padrão de solução mantendo a lógica intacta, evitando qualquer analogia superficial que não preserve a coerência estrutural ou o contexto essencial."
+  },
+  {
+    "categoria": "Pensar interno (cognitivo)",
+    "nome": "Heurísticas e Vieses Cognitivos",
+    "autor": "Daniel Kahneman & Amos Tversky",
+    "periodo": "Israel/EUA, 1974",
+    "descricao": "A mente usa atalhos cognitivos que geram distorções.",
+    "perguntaOrigem": "“Qual heurística pode estar enviesando esta decisão?”",
+    "prompt": "Examine suas decisões em busca de possíveis heurísticas que possam estar distorcendo o julgamento, identifique o viés cognitivo envolvido e ajuste o raciocínio para restabelecer a objetividade, evitando conclusões precipitadas ou baseadas em atalhos mentais enganadores."
+  },
+  {
+    "categoria": "Pensar interno (cognitivo)",
+    "nome": "Role Playing Cognitivo",
+    "autor": "Jacob L. Moreno (psicodrama)",
+    "periodo": "Áustria/EUA, séc. XX",
+    "descricao": "Simular perspectivas assumindo papéis mentais.",
+    "perguntaOrigem": "“Se eu fosse esta outra pessoa, como pensaria e sentiria?”",
+    "prompt": "Assuma temporariamente o papel de [variáve/papel], adote seu contexto, objetivos, emoções e limitações, e raciocine a partir dessa perspectiva para compreender motivações e possíveis ações, ampliando empatia, antecipação de comportamento e qualidade das decisões sem projetar seus próprios vieses."
+  },
+  {
+    "categoria": "Pensar interno (cognitivo)",
+    "nome": "Memória de Trabalho (Working Memory)",
+    "autor": "Alan Baddeley & Graham Hitch",
+    "periodo": "Reino Unido, 1974",
+    "descricao": "Sistema cognitivo que mantém e manipula informações temporárias para raciocínio e decisão.",
+    "perguntaOrigem": "“Quais informações mínimas preciso manter ativas na mente para resolver este problema?”",
+    "prompt": "Mantenha ativas apenas as informações essenciais necessárias para avançar no raciocínio, organize-as de forma que possam ser manipuladas com clareza e descarte ou adie tudo que não contribui diretamente para a resolução imediata do problema, preservando foco, precisão e capacidade cognitiva."
+  },
+  {
+    "categoria": "Pensar interno (cognitivo)",
+    "nome": "Aprendizagem por Reforço Interna",
+    "autor": "Edward Thorndike / B.F. Skinner",
+    "periodo": "EUA, séc. XX",
+    "descricao": "A mente ajusta escolhas com base em recompensas e punições anteriores.",
+    "perguntaOrigem": "“O que meu histórico de recompensas indica que devo repetir ou evitar agora?”",
+    "prompt": "Avalie seu histórico de recompensas e punições, identifique padrões de ações que geraram bons ou maus resultados e ajuste suas escolhas atuais para repetir comportamentos bem-sucedidos e evitar os que causaram prejuízo, orientando decisões com base em aprendizado real, não em impulsos ou crenças infundadas."
+  },
+  {
+    "categoria": "Pensar interno (cognitivo)",
+    "nome": "Ilusão de Controle",
+    "autor": "Ellen Langer",
+    "periodo": "EUA, 1975",
+    "descricao": "Tendência cognitiva de superestimar nossa influência sobre eventos aleatórios.",
+    "perguntaOrigem": "“Estou confundindo acaso com controle real sobre a situação?”",
+    "prompt": "Questione se você está atribuindo significado ou controle onde há apenas acaso, examine a origem dos resultados para distinguir o que depende de suas ações do que é aleatório e ajuste suas expectativas e decisões com base nessa distinção, evitando ilusões de controle que distorcem o julgamento e a responsabilidade."
+  },
+  {
+    "categoria": "Pensar interno (cognitivo)",
+    "nome": "Pensamento Lento e Rápido (Sistema 1 e 2)",
+    "autor": "Daniel Kahneman",
+    "periodo": "Israel/EUA, 2011",
+    "descricao": "Dois modos cognitivos: rápido-intuitivo (S1) e lento-analítico (S2).",
+    "perguntaOrigem": "“Estou decidindo de forma automática (S1) ou deliberada (S2)?”",
+    "prompt": "Identifique se a decisão está sendo guiada pelo modo rápido, intuitivo e automático (Sistema 1) ou pelo modo lento, analítico e deliberado (Sistema 2), e escolha conscientemente quando desacelerar para avaliar evidências, lógica e riscos antes de agir, evitando impulsos não examinados e garantindo raciocínio mais preciso e controlado."
+  },
+  {
+    "categoria": "Pensar interno (cognitivo)",
+    "nome": "Curva do Esquecimento (Forgetting Curve)",
+    "autor": "Hermann Ebbinghaus",
+    "periodo": "Alemanha, 1885",
+    "descricao": "A memória decai exponencialmente sem revisão.",
+    "perguntaOrigem": "“Quando preciso revisar esta informação para evitar o esquecimento?”",
+    "prompt": "Determine quando revisar cada informação para interromper o decaimento da memória, planejando revisões espaçadas nos momentos ideais para reforçar o aprendizado e garantir retenção duradoura, evitando esquecer o conteúdo por falta de retomada consciente e estratégica."
+  },
+  {
+    "categoria": "Pensar interno (cognitivo)",
+    "nome": "Teoria da Carga Cognitiva",
+    "autor": "John Sweller",
+    "periodo": "Austrália, 1988",
+    "descricao": "A mente tem capacidade limitada de processamento; excesso gera falha no aprendizado.",
+    "perguntaOrigem": "“Como posso simplificar ou dividir a tarefa para reduzir carga cognitiva?”",
+    "prompt": "Divida a tarefa em etapas simples e manejáveis, elimine distrações e informações irrelevantes e organize a sequência de ações para reduzir a carga cognitiva, garantindo que o processamento seja eficiente, o aprendizado fluido e a performance sustentada sem sobrecarga mental."
+  },
+  {
+    "categoria": "Pensar quantitativo (matemático)",
+    "nome": "Pensamento Probabilístico",
+    "autor": "Blaise Pascal",
+    "periodo": "França, séc. XVII",
+    "descricao": "Decidir ponderando chances e impactos.",
+    "perguntaOrigem": "“Quais probabilidades e valores esperados de cada opção?”",
+    "prompt": "Avalie cada opção considerando as probabilidades dos resultados possíveis e seus impactos associados, calcule o valor esperado e escolha aquela que maximize ganhos e minimize perdas, tomando decisões baseadas em estimativas racionais e não apenas em intuição ou desejo."
+  },
+  {
+    "categoria": "Pensar quantitativo (matemático)",
+    "nome": "Pensamento Bayesiano",
+    "autor": "Thomas Bayes",
+    "periodo": "Reino Unido, séc. XVIII",
+    "descricao": "Atualizar crenças com novas evidências.",
+    "perguntaOrigem": "“Dado o novo dado, como muda minha crença a priori (posterior)?”",
+    "prompt": "Atualize suas crenças com base em novas evidências, ajustando o grau de confiança nas hipóteses conforme a força e relevância dos dados recém-obtidos, evitando apego a premissas antigas e garantindo que suas conclusões reflitam sempre o estado mais atual do conhecimento disponível."
+  },
+  {
+    "categoria": "Pensar quantitativo (matemático)",
+    "nome": "Análise Custo-Benefício",
+    "autor": "Jules Dupuit",
+    "periodo": "França, séc. XIX",
+    "descricao": "Comparar benefícios e custos marginais.",
+    "perguntaOrigem": "“O benefício marginal supera o custo marginal desta decisão?”",
+    "prompt": "Avalie o ganho adicional obtido ao realizar mais uma unidade de ação e compare com o custo adicional necessário para isso; se o benefício marginal não superar o custo marginal, ajuste ou interrompa a decisão, garantindo alocação eficiente de recursos e melhores resultados."
+  },
+  {
+    "categoria": "Pensar quantitativo (matemático)",
+    "nome": "Pensamento Contra-Factual",
+    "autor": "John Stuart Mill",
+    "periodo": "Inglaterra, séc. XIX",
+    "descricao": "Estimar o que teria acontecido sem x.",
+    "perguntaOrigem": "“Se x não ocorresse, qual seria o resultado plausível?”",
+    "prompt": "Imagine cenários plausíveis em que [x] não ocorre, avalie como os resultados se alterariam na ausência desse fator e use essa comparação para medir seu impacto real, distinguindo causalidade de coincidência e fortalecendo conclusões baseadas em evidências contrafactuais."
+  },
+  {
+    "categoria": "Pensar quantitativo (matemático)",
+    "nome": "Teoria dos Jogos (aplicada)",
+    "autor": "von Neumann/Morgenstern",
+    "periodo": "EUA, séc. XX",
+    "descricao": "Estratégia com interdependência de ações.",
+    "perguntaOrigem": "“Qual é o equilíbrio dado o melhor-resposta dos outros agentes?”",
+    "prompt": "Considere que suas escolhas afetam e são afetadas pelas decisões de outros agentes, identifique a melhor-resposta de cada participante e determine o ponto de equilíbrio em que ninguém tem incentivo para mudar sua estratégia unilateralmente, orientando suas ações para resultados ótimos em contextos de interdependência estratégica."
+  },
+  {
+    "categoria": "Pensar quantitativo (matemático)",
+    "nome": "Árvores de Decisão",
+    "autor": "Estatística/IA",
+    "periodo": "Moderno",
+    "descricao": "Ramificar opções, probabilidades e payoffs.",
+    "perguntaOrigem": "“Desenhe ramos, atribua probabilidades e calcule valor esperado.”",
+    "prompt": "Construa uma árvore de decisão: ramifique opções e desfechos, explicite premissas, atribua probabilidades que somem 1 em cada nó e quantifique os payoffs. Calcule o valor esperado de cada ramo e de cada alternativa, compare-os e selecione a opção de maior valor esperado (ou utilidade definida). Sinalize riscos assimétricos, dependências e pontos de informação que alterariam probabilidades. Inclua análise de sensibilidade para variáveis críticas e apresente a recomendação resultante de forma direta e acionável."
+  },
+  {
+    "categoria": "Pensar quantitativo (matemático)",
+    "nome": "Pensar em Apostas",
+    "autor": "Annie Duke",
+    "periodo": "EUA, séc. XXI",
+    "descricao": "Formular decisões como odds e EV.",
+    "perguntaOrigem": "“Que odds/EV atribuo e qual stake racional assumo?”",
+    "prompt": "Converta cada decisão em odds e valor esperado (EV): estime probabilidades em forma fracionária ou decimal, quantifique o ganho/perda associado e calcule o EV para determinar se a aposta é positiva. Ajuste a exposição (stake) de acordo com o EV e sua tolerância ao risco, evitando comprometer recursos além do racional e aumentando a posição apenas quando o EV se mantiver consistentemente favorável com margem de segurança."
+  },
+  {
+    "categoria": "Pensar quantitativo (matemático)",
+    "nome": "Lei dos Grandes Números",
+    "autor": "Jakob Bernoulli",
+    "periodo": "Suíça, 1713",
+    "descricao": "Resultados aleatórios se estabilizam em média após muitas repetições.",
+    "perguntaOrigem": "“Se eu repetir muitas vezes, qual valor tende a emergir como estável?”",
+    "prompt": "Considere que eventos aleatórios flutuam no curto prazo, mas convergem para uma média estável com muitas repetições; use essa expectativa para avaliar resultados prováveis no longo prazo, evitando conclusões baseadas em variações momentâneas e orientando decisões pela tendência estatisticamente mais consistente."
+  },
+  {
+    "categoria": "Pensar quantitativo (matemático)",
+    "nome": "Teoria da Utilidade Esperada",
+    "autor": "Daniel Bernoulli",
+    "periodo": "Suíça, 1738",
+    "descricao": "Decisões devem considerar não só probabilidade, mas utilidade percebida.",
+    "perguntaOrigem": "“Qual resultado maximiza minha utilidade esperada, não só valor financeiro?”",
+    "prompt": "Avalie cada resultado não apenas pelo valor financeiro, mas pelo quanto ele contribui para sua utilidade subjetiva, considerando bem-estar, preferências e aversão ao risco; estime a utilidade esperada de cada opção e escolha aquela que maximize esse valor, mesmo que não seja a de maior retorno monetário, garantindo decisões alinhadas ao que realmente importa para você."
+  },
+  {
+    "categoria": "Pensar quantitativo (matemático)",
+    "nome": "Teoria dos Jogos Evolutivos",
+    "autor": "John Maynard Smith",
+    "periodo": "Reino Unido, 1973",
+    "descricao": "Estratégias se estabilizam em populações via dinâmica evolutiva.",
+    "perguntaOrigem": "“Se esta decisão fosse replicada numa população, ela se sustentaria?”",
+    "prompt": "Avalie se sua decisão geraria uma estratégia que, ao ser repetida por muitos indivíduos em uma população, não poderia ser explorada ou superada facilmente por alternativas, garantindo que ela se sustente e se propague de forma estável sob competição e adaptação contínuas no longo prazo."
+  },
+  {
+    "categoria": "Pensar quantitativo (matemático)",
+    "nome": "Pensamento Estatístico Descritivo",
+    "autor": "Francis Galton / Karl Pearson",
+    "periodo": "Reino Unido, séc. XIX",
+    "descricao": "Usar medidas de tendência central e dispersão para resumir fenômenos.",
+    "perguntaOrigem": "“Qual é a média, mediana e variabilidade desta situação?”",
+    "prompt": "Resuma o fenômeno analisando sua tendência central (como média e mediana) e a dispersão dos dados (como desvio padrão ou amplitude), garantindo entendimento equilibrado entre o ponto típico e a variabilidade, e utilizando essas métricas para orientar inferências e decisões com maior precisão."
+  },
+  {
+    "categoria": "Pensar quantitativo (matemático)",
+    "nome": "Modelagem Estocástica (Processos de Markov)",
+    "autor": "Andrey Markov",
+    "periodo": "Rússia, 1906",
+    "descricao": "Probabilidades futuras dependem apenas do estado atual (memória curta).",
+    "perguntaOrigem": "“Qual o próximo estado provável dado o estado atual, sem olhar o passado?”",
+    "prompt": "Considere apenas o estado atual do sistema, ignorando o histórico, e estime o próximo estado provável com base nas transições possíveis e suas probabilidades, focando no que o presente torna mais provável acontecer, sem influências passadas que não alterem o estado vigente."
+  },
+  {
+    "categoria": "Pensar quantitativo (matemático)",
+    "nome": "Teoria da Informação (Entropia de Shannon)",
+    "autor": "Claude Shannon",
+    "periodo": "EUA, 1948",
+    "descricao": "Mensura a quantidade de informação e incerteza em um sistema.",
+    "perguntaOrigem": "“Qual a incerteza (entropia) deste conjunto de dados e como reduzi-la?”",
+    "prompt": "Quantifique a incerteza do sistema calculando sua entropia informacional e identifique quais ações, observações ou dados adicionais podem reduzir essa incerteza de forma mais eficiente, aumentando a previsibilidade e o entendimento do fenômeno sem desperdício de recursos."
+  },
+  {
+    "categoria": "Pensar quantitativo (matemático)",
+    "nome": "Regressão e Correlação",
+    "autor": "Francis Galton / Karl Pearson",
+    "periodo": "Reino Unido, séc. XIX",
+    "descricao": "Medir a relação estatística entre variáveis e prever valores.",
+    "perguntaOrigem": "“Qual variável explica melhor a variação desta outra?”",
+    "prompt": "Avalie a relação estatística entre as variáveis, identifique aquela que melhor explica a variação da outra com base em correlação ou modelos preditivos e estime valores futuros com fundamento nessa relação, garantindo que a inferência seja suportada pelos dados e evitando conclusões sem significância ou causalidade indevida."
+  },
+  {
+    "categoria": "Pensar quantitativo (matemático)",
+    "nome": "Leis de Potência (Power Laws)",
+    "autor": "Vilfredo Pareto (1896), Barabási (moderno)",
+    "periodo": "Itália / Hungria, séc. XIX–XX",
+    "descricao": "Muitos fenômenos seguem distribuições desiguais (80/20).",
+    "perguntaOrigem": "“Quais poucos fatores concentram a maior parte dos efeitos?”",
+    "prompt": "Identifique os poucos fatores que geram a maior parte dos efeitos, concentre a análise neles e descarte ou minimize o restante que contribui pouco para o resultado; direcione esforços para otimizar ou controlar esses elementos de impacto desproporcional, maximizando retorno e eficiência com foco no que realmente Move a agulha."
+  },
+  {
+    "categoria": "Pensar quantitativo (matemático)",
+    "nome": "Análise de Risco (Value at Risk, variância etc.)",
+    "autor": "Matemática financeira / séc. XX",
+    "periodo": "EUA, 1950+",
+    "descricao": "Avaliar perdas potenciais e sua probabilidade em cenários de incerteza.",
+    "perguntaOrigem": "“Qual a pior perda provável dentro de 95% de confiança?”",
+    "prompt": "Avalie cenários de risco estimando a pior perda provável dentro de um intervalo de confiança, como 95%, considerando distribuições de resultados e suas probabilidades; use essa medida para limitar exposições indevidas, definir proteções e tomar decisões mais responsáveis em contextos de incerteza."
+  },
+  {
+    "categoria": "Pensar prático (estratégico)",
+    "nome": "Estratégia Indireta",
+    "autor": "Sun Tzu",
+    "periodo": "China, séc. IV a.C.",
+    "descricao": "Vencer por assimetria, tempo e informação.",
+    "perguntaOrigem": "“Qual via oblíqua reduz atrito e amplia alavancagem?”",
+    "prompt": "Busque caminhos assimétricos que reduzam atrito direto com obstáculos e ampliem alavancagem por tempo, conhecimento ou posicionamento estratégico; privilegie soluções oblíquas que explorem vantagens ocultas e gerem progressos significativos com menor esforço e menor exposição a confrontos frontais."
+  },
+  {
+    "categoria": "Pensar prático (estratégico)",
+    "nome": "Método Estoico de Reavaliação",
+    "autor": "Sêneca/Epiteto/Marco Aurélio",
+    "periodo": "Roma, sécs. I–II",
+    "descricao": "Focar no controle; reinterpretar eventos.",
+    "perguntaOrigem": "“O que controlo agora e como resignifico o resto?”",
+    "prompt": "Concentre-se apenas no que pode controlar diretamente agora, direcione energia para ações efetivas e resignifique tudo que está fora do seu alcance como contexto, não como obstáculo; ao ajustar interpretação e foco, transforme incertezas em neutralidade psicológica e preserve recursos para o que realmente altera o resultado."
+  },
+  {
+    "categoria": "Pensar prático (estratégico)",
+    "nome": "Névoa da Guerra",
+    "autor": "Carl von Clausewitz",
+    "periodo": "Prússia, séc. XIX",
+    "descricao": "Agir sob incerteza e fricção.",
+    "perguntaOrigem": "“Que decisão é robusta mesmo com informações imperfeitas?”",
+    "prompt": "Escolha a ação que permanece eficaz mesmo quando informações são incompletas ou imprecisas, priorizando decisões robustas que não dependem de previsões exatas nem de condições ideais, reduzindo fragilidade e garantindo progresso consistente apesar da incerteza e da fricção inevitáveis do mundo real."
+  },
+  {
+    "categoria": "Pensar prático (estratégico)",
+    "nome": "Análise de Cenários",
+    "autor": "Herman Kahn",
+    "periodo": "EUA, séc. XX",
+    "descricao": "Planejar por futuros plausíveis.",
+    "perguntaOrigem": "“Quais 3 cenários extremos/plausíveis e minha estratégia em cada?”",
+    "prompt": "Projete ao menos três futuros plausíveis — incluindo cenários extremos positivos e negativos — identifique como cada um afetaria seus objetivos e defina estratégias claras e viáveis para responder em cada caso, garantindo preparação, resiliência e capacidade de adaptação diante da incerteza."
+  },
+  {
+    "categoria": "Pensar prático (estratégico)",
+    "nome": "Ciclo PDCA",
+    "autor": "W. Edwards Deming",
+    "periodo": "EUA, séc. XX",
+    "descricao": "Melhorar por iterar: planejar, fazer, checar, agir.",
+    "perguntaOrigem": "“Qual o plano mínimo, o teste, a verificação e o ajuste?”",
+    "prompt": "Defina o plano mínimo necessário para começar, execute rapidamente a ação prevista, avalie os resultados medindo o que funcionou e o que falhou e ajuste o processo com base nessas evidências, repetindo o ciclo de forma incremental para melhorar continuamente com rapidez, baixo risco e aprendizado constante."
+  },
+  {
+    "categoria": "Pensar prático (estratégico)",
+    "nome": "Pensamento Lateral",
+    "autor": "Edward de Bono",
+    "periodo": "Malta, séc. XX",
+    "descricao": "Produzir soluções não-óbvias.",
+    "perguntaOrigem": "“Liste 5 caminhos não usuais e force combinações improváveis.”",
+    "prompt": "Gere ao menos cinco caminhos não usuais para o problema, priorizando abordagens fora do padrão, depois combine ideias improváveis entre si para revelar soluções não-óbvias que ampliem o espaço de possibilidades, desafiem suposições e criem resultados criativos com potencial superior ao das opções convencionais."
+  },
+  {
+    "categoria": "Pensar prático (estratégico)",
+    "nome": "Pensamento de Segundo Nível",
+    "autor": "Howard Marks",
+    "periodo": "EUA, séc. XXI",
+    "descricao": "Antecipar reações às reações.",
+    "perguntaOrigem": "“O que os outros farão com essa informação — e o que faço após isso?”",
+    "prompt": "Projete como os outros interpretarão e reagirão à sua ação ou informação, antecipe as consequências dessas reações e planeje a resposta subsequente, operando sempre alguns passos à frente para manter vantagem estratégica e evitar surpresas desfavoráveis."
+  },
+  {
+    "categoria": "Pensar prático (estratégico)",
+    "nome": "Ciclo OODA",
+    "autor": "John Boyd",
+    "periodo": "EUA, séc. XX",
+    "descricao": "Observar, orientar, decidir, agir rapidamente.",
+    "perguntaOrigem": "“Qual meu loop OODA e onde posso encurtá-lo?”",
+    "prompt": "Observe o cenário atual com precisão, oriente-se rapidamente atualizando seus modelos mentais com as novas informações, decida com clareza a melhor ação disponível e execute sem demora, encurtando cada fase do loop OODA para superar a lentidão do ambiente ou dos adversários, mantendo vantagem adaptativa contínua."
+  },
+  {
+    "categoria": "Pensar prático (estratégico)",
+    "nome": "Backcasting",
+    "autor": "John B. Robinson",
+    "periodo": "Canadá, séc. XX",
+    "descricao": "Planejar do futuro desejado ao presente.",
+    "perguntaOrigem": "“Se já tivesse sucesso, quais passos anteriores o tornaram possível?”",
+    "prompt": "Visualize o sucesso já alcançado e, a partir desse estado futuro desejado, identifique os passos imediatamente anteriores que o tornaram possível; retroceda sequencialmente até o presente, transformando a visão em uma cadeia prática de ações necessárias que conectam onde você está agora ao resultado que quer atingir, garantindo direção clara e foco estratégico."
+  },
+  {
+    "categoria": "Pensar prático (estratégico)",
+    "nome": "Engenharia Reversa",
+    "autor": "Indústria moderna",
+    "periodo": "séc. XX",
+    "descricao": "Entender desmontando e recompondo.",
+    "perguntaOrigem": "“Que componentes o compõem e como interagem ao todo?”",
+    "prompt": "Decomponha o sistema em seus componentes essenciais, identifique como cada parte funciona e como interagem entre si, e então recomponha o todo com compreensão profunda das relações internas, garantindo soluções mais precisas e decisões melhor fundamentadas."
+  },
+  {
+    "categoria": "Pensar prático (estratégico)",
+    "nome": "Red Team Thinking",
+    "autor": "Estratégia militar moderna",
+    "periodo": "séc. XX",
+    "descricao": "Testar planos por ataque simulado.",
+    "perguntaOrigem": "“Se eu fosse o adversário, como exploraria nossas falhas?”",
+    "prompt": "Adote o papel do adversário: imagine objetivos, capacidades e incentivos hostis; mapeie todos os vetores plausíveis (técnicos, processuais, humanos), ataque mentalmente cada ponto buscando contradições e brechas, priorize por probabilidade × impacto, proponha correções imediatas e controles verificáveis, e repita a simulação até que as falhas críticas tenham mitigação testada e rotina de revisão."
+  },
+  {
+    "categoria": "Pensar prático (estratégico)",
+    "nome": "Pensamento Baseado em Restrições (TOC)",
+    "autor": "Eliyahu Goldratt",
+    "periodo": "Israel, séc. XX",
+    "descricao": "Encontrar e explorar o gargalo do sistema.",
+    "perguntaOrigem": "“Qual é a restrição crítica e como a elevo/agendo o fluxo ao redor?”",
+    "prompt": "Identifique e trate o gargalo como prioridade absoluta: meça onde o fluxo se congestiona, quantifique sua capacidade e impacto sobre o objetivo, gere alternativas práticas para elevá-lo (aumentar capacidade, reduzir carga, redistribuir tarefas, criar buffers ou paralelizar), implemente a intervenção de menor custo/maior efeito primeiro, monitore métricas de throughput e tempo de espera para validar ganho e repita o ciclo até que outra restrição emergente seja claramente identificada."
+  },
+  {
+    "categoria": "Pensar prático (estratégico)",
+    "nome": "Técnica de Pré-Mortem",
+    "autor": "Gary Klein",
+    "periodo": "EUA, séc. XXI",
+    "descricao": "Imaginar o fracasso e mitigá-lo antes.",
+    "perguntaOrigem": "“Suponha que falhou: quais causas e como preveni-las agora?”",
+    "prompt": "Projete o cenário em que tudo falhou, identifique as causas específicas desse resultado e priorize aquelas com maior probabilidade e impacto; desenvolva ações preventivas e salvaguardas para eliminar ou reduzir cada causa destacada e ajuste o plano atual antes de prosseguir, garantindo que os principais riscos estejam neutralizados antecipadamente."
+  },
+  {
+    "categoria": "Pensar prático (estratégico)",
+    "nome": "Estratégia do Oceano Azul",
+    "autor": "W. Chan Kim & Renée Mauborgne",
+    "periodo": "Coreia/França, 2005",
+    "descricao": "Criar mercados inexplorados ao invés de competir nos existentes.",
+    "perguntaOrigem": "“Qual espaço não disputado posso criar em vez de lutar no espaço atual?”",
+    "prompt": "Busque um espaço ainda não disputado analisando necessidades negligenciadas, públicos mal atendidos ou novos modos de entregar valor; rejeite a competição direta pelo mercado atual e crie uma proposição única que torne a concorrência irrelevante, expandindo fronteiras e estabelecendo seu próprio território estratégico com diferenciação clara e sustentável."
+  },
+  {
+    "categoria": "Pensar prático (estratégico)",
+    "nome": "Estratégia de Assimetria",
+    "autor": "Sun Tzu (raízes), modernizada em guerras irregulares",
+    "periodo": "Antiguidade / séc. XX",
+    "descricao": "Usar forças desproporcionais ou inesperadas para vencer com menos recursos.",
+    "perguntaOrigem": "“Como posso explorar assimetrias para ter vantagem com poucos recursos?”",
+    "prompt": "Atue buscando forças desproporcionais: mapeie e priorize assimetrias ocultas (tempo, informação, custo, acesso, habilidades), quantifique o potencial de alavancagem de cada uma, proponha táticas concretas que exploitam essas assimetrias com mínimo gasto e máximo multiplicador, evite confrontos simétricos e operações de alto custo, defina métricas de sucesso e um plano de execução iterativo para testar, validar e ampliar rapidamente a vantagem obtida."
+  },
+  {
+    "categoria": "Pensar prático (estratégico)",
+    "nome": "Estratégia da Distração / Diversão",
+    "autor": "Nicolau Maquiavel / Arte da Guerra (século XVI)",
+    "periodo": "Itália, 1532",
+    "descricao": "Redirecionar atenção do adversário para esconder o movimento principal.",
+    "perguntaOrigem": "“Que distração posso criar para abrir espaço à minha verdadeira ação?”",
+    "prompt": "Adote a mentalidade de um estrategista que opera por distração: identifique o alvo e suas prioridades, projete uma isca crível e de baixo custo que direcione atenção e recursos adversos para a esquerda, sincronize o tempo da distração com o movimento principal, mensure sinais de captura de atenção, minimize sinais que entreguem a intenção real e itere rapidamente até que o espaço necessário esteja criado para executar a ação decisiva."
+  },
+  {
+    "categoria": "Pensar relacional (sistêmico)",
+    "nome": "Ciclo das Civilizações",
+    "autor": "Ibn Khaldun",
+    "periodo": "Tunísia, séc. XIV",
+    "descricao": "Sociedades sob ciclos de coesão/declínio.",
+    "perguntaOrigem": "“Em que fase do ciclo este sistema histórico/organizacional está?”",
+    "prompt": "Analise o sistema histórico ou organizacional identificando sinais de coesão, expansão, estagnação ou declínio; determine em qual fase do ciclo ele se encontra com base em indicadores de confiança, coordenação, recursos e propósito comum; use essa avaliação para antecipar transições prováveis e orientar decisões que sustentem ou restaurem a vitalidade coletiva."
+  },
+  {
+    "categoria": "Pensar relacional (sistêmico)",
+    "nome": "Pensamento Sistêmico",
+    "autor": "Peter Senge",
+    "periodo": "EUA, séc. XX",
+    "descricao": "Mapear interdependências e feedbacks.",
+    "perguntaOrigem": "“Quais loops de reforço/estabilização governam o comportamento?”",
+    "prompt": "Identifique as relações de causa e efeito entre elementos do sistema, mapeie loops de reforço que amplificam comportamentos e loops de estabilização que os equilibram, observe como essas interdependências geram dinâmicas emergentes e use esse entendimento para prever mudanças, ajustar intervenções e influenciar o sistema de forma mais eficaz e sustentável."
+  },
+  {
+    "categoria": "Pensar relacional (sistêmico)",
+    "nome": "Grade de Modelos Múltiplos",
+    "autor": "Charlie Munger",
+    "periodo": "EUA, séc. XX",
+    "descricao": "Integrar lentes de várias disciplinas.",
+    "perguntaOrigem": "“Quais modelos de outras áreas iluminam este problema?”",
+    "prompt": "Consulte modelos de múltiplas disciplinas que possam iluminar o problema sob diferentes perspectivas, selecione aqueles que revelam padrões, mecanismos e soluções não visíveis por uma única área e integre esses insights de forma coerente, evitando reducionismos e ampliando a capacidade de compreensão e intervenção com abordagens verdadeiramente transdisciplinares."
+  },
+  {
+    "categoria": "Pensar relacional (sistêmico)",
+    "nome": "Pensamento Evolutivo",
+    "autor": "Charles Darwin",
+    "periodo": "Inglaterra, séc. XIX",
+    "descricao": "Adaptação por variação/seleção/retensão.",
+    "perguntaOrigem": "“Quais pressões seletivas moldam a trajetória deste sistema?”",
+    "prompt": "Identifique as pressões seletivas que favorecem certas variações dentro do sistema, observe o que é retido ou eliminado ao longo do tempo e use essa dinâmica evolutiva para entender e antecipar a trajetória do sistema, orientando ações que ampliem adaptações desejadas e reduzam comportamentos mal-adaptados."
+  },
+  {
+    "categoria": "Pensar relacional (sistêmico)",
+    "nome": "Segunda Ordem de Consequências",
+    "autor": "Economia/Engenharia",
+    "periodo": "Moderno",
+    "descricao": "Avaliar efeitos indiretos e tardios.",
+    "perguntaOrigem": "“O que acontece depois do ‘depois’ desta decisão?”",
+    "prompt": "Avalie as consequências além do imediato, projetando efeitos indiretos e de segunda ordem que surgem após as primeiras reações à decisão, estimando impactos tardios e encadeamentos futuros; use essa visão expandida para evitar armadilhas de curto prazo e tomar decisões mais sustentáveis e estrategicamente vantajosas."
+  },
+  {
+    "categoria": "Pensar relacional (sistêmico)",
+    "nome": "Antifragilidade",
+    "autor": "Nassim Taleb",
+    "periodo": "Líbano/EUA, séc. XXI",
+    "descricao": "Ganhar com volatilidade e estresse.",
+    "perguntaOrigem": "“Como estruturo para que choques melhorem o sistema?”",
+    "prompt": "Estruture o sistema para que choques, incertezas e estresse sirvam como combustível de melhoria: projete redundâncias inteligentes, opções flexíveis e mecanismos de aprendizado que se ativem em condições adversas, garantindo que perturbações não apenas não prejudiquem, mas fortaleçam continuamente o desempenho e a resiliência."
+  },
+  {
+    "categoria": "Pensar relacional (sistêmico)",
+    "nome": "Teoria Geral dos Sistemas",
+    "autor": "Ludwig von Bertalanffy",
+    "periodo": "Áustria, séc. XX",
+    "descricao": "Tudo pode ser visto como sistema aberto em interação com ambiente.",
+    "perguntaOrigem": "“Quais entradas, processos e saídas caracterizam este sistema?”",
+    "prompt": "Enxergue o fenômeno como um sistema aberto: identifique suas entradas, processos internos e saídas; analise como interage com o ambiente e como mudanças externas impactam o comportamento interno; use esse mapeamento para antecipar respostas do sistema, otimizar fluxos e melhorar resultados de forma integrada e contínua."
+  },
+  {
+    "categoria": "Pensar relacional (sistêmico)",
+    "nome": "Cibernética (Feedback)",
+    "autor": "Norbert Wiener",
+    "periodo": "EUA, 1948",
+    "descricao": "Sistemas se autorregulam por ciclos de feedback positivo e negativo.",
+    "perguntaOrigem": "“Quais laços de feedback estão estabilizando ou amplificando este processo?”",
+    "prompt": "Identifique os laços de feedback que estabilizam ou amplificam o processo, determine como cada ciclo influencia o comportamento do sistema ao longo do tempo e ajuste os pontos de intervenção para reforçar efeitos desejados ou atenuar desvios indesejados, garantindo que a autorregulação opere de forma alinhada aos objetivos e resiliente a perturbações."
+  },
+  {
+    "categoria": "Pensar relacional (sistêmico)",
+    "nome": "Homeostase",
+    "autor": "Walter Cannon (fisiologia)",
+    "periodo": "EUA, 1926",
+    "descricao": "Sistemas vivos buscam estabilidade dinâmica frente a perturbações.",
+    "perguntaOrigem": "“Que mecanismos internos restauram equilíbrio após mudanças externas?”",
+    "prompt": "Identifique os mecanismos internos que restauram equilíbrio após mudanças externas, observe como eles ajustam continuamente o sistema para manter estabilidade dinâmica e direcione suas ações para fortalecer essas capacidades adaptativas, garantindo resiliência e funcionamento saudável mesmo sob perturbações constantes."
+  },
+  {
+    "categoria": "Pensar relacional (sistêmico)",
+    "nome": "Autopoiese",
+    "autor": "Humberto Maturana & Francisco Varela",
+    "periodo": "Chile, 1972",
+    "descricao": "Sistemas vivos se auto-produzem e se distinguem do ambiente.",
+    "perguntaOrigem": "“O que neste sistema garante sua própria reprodução contínua?”",
+    "prompt": "Identifique os componentes e processos que permitem ao sistema manter-se, reproduzir suas próprias partes e preservar sua identidade distinta do ambiente, analisando como ele gera continuamente o que precisa para existir e ajustando intervenções para reforçar essa autoconstituição de forma sustentável e adaptativa."
+  },
+  {
+    "categoria": "Pensar relacional (sistêmico)",
+    "nome": "Sinergia",
+    "autor": "Peter Corning (conceito ampliado)",
+    "periodo": "EUA, séc. XX",
+    "descricao": "O todo gera propriedades emergentes não redutíveis às partes.",
+    "perguntaOrigem": "“Que resultados emergem aqui que nenhuma parte isolada explica?”",
+    "prompt": "Observe comportamentos e resultados que surgem da interação entre as partes e não podem ser explicados por elementos isolados, identifique padrões emergentes e use esse entendimento para intervir no nível das relações e da dinâmica coletiva, ampliando o poder de previsão e de transformação do sistema como um todo."
+  },
+  {
+    "categoria": "Pensar relacional (sistêmico)",
+    "nome": "Complexidade Adaptativa",
+    "autor": "Murray Gell-Mann & Santa Fe Institute",
+    "periodo": "EUA, séc. XX",
+    "descricao": "Sistemas complexos se adaptam por múltiplas interações locais.",
+    "perguntaOrigem": "“Quais regras locais simples geram padrões globais complexos?”",
+    "prompt": "Analise como interações locais entre elementos seguem regras simples, mas produzem padrões globais complexos e dinâmicos; identifique essas regras e avalie como pequenas mudanças nelas podem gerar transformações significativas no comportamento geral do sistema, orientando intervenções eficazes e escaláveis."
+  },
+  {
+    "categoria": "Pensar relacional (sistêmico)",
+    "nome": "Fractais / Auto-similaridade",
+    "autor": "Benoît Mandelbrot",
+    "periodo": "França/EUA, 1975",
+    "descricao": "Estruturas que se repetem em múltiplas escalas (auto-similaridade).",
+    "perguntaOrigem": "“Qual padrão se repete em diferentes escalas deste problema?”",
+    "prompt": "Identifique padrões que se repetem em diferentes escalas do problema, observe a auto-similaridade estrutural e use essa recorrência para simplificar a análise e a solução: se o mesmo formato surge no micro e no macro, ajuste sua intervenção no ponto mais alavancado da escala, garantindo coerência e impacto em todo o sistema."
+  },
+  {
+    "categoria": "Pensar relacional (sistêmico)",
+    "nome": "Redes Complexas",
+    "autor": "Albert-László Barabási",
+    "periodo": "Hungria/EUA, 1999",
+    "descricao": "Sistemas formam redes com nós e conexões distribuídas (preferential attachment).",
+    "perguntaOrigem": "“Quais nós desta rede concentram maior influência?”",
+    "prompt": "Mapeie a rede identificando seus nós e conexões, determine quais nós concentram maior influência ou conectividade e direcione suas ações para esses pontos críticos, maximizando impacto com intervenções estratégicas que aproveitam a estrutura distribuída do sistema para amplificar resultados."
+  },
+  {
+    "categoria": "Pensar relacional (sistêmico)",
+    "nome": "Entropia / Segunda Lei da Termodinâmica",
+    "autor": "Rudolf Clausius & Ludwig Boltzmann",
+    "periodo": "Alemanha, séc. XIX",
+    "descricao": "Todo sistema fechado tende ao aumento da desordem.",
+    "perguntaOrigem": "“Que parte deste sistema inevitavelmente se degrada ao longo do tempo?”",
+    "prompt": "Observe quais componentes do sistema estão sujeitos a desgaste, desordem ou perda de eficiência com o tempo, identifique os pontos mais vulneráveis à entropia e crie mecanismos de manutenção, renovação ou substituição que retardem a degradação e preservem o funcionamento do conjunto pelo máximo de tempo viável."
+  },
+  {
+    "categoria": "Pensar relacional (sistêmico)",
+    "nome": "Acoplamento Estrutural",
+    "autor": "Niklas Luhmann",
+    "periodo": "Alemanha, séc. XX",
+    "descricao": "Sistemas sociais e biológicos se adaptam em coevolução, sem fusão total.",
+    "perguntaOrigem": "“Como este sistema se acopla a outros sem perder sua identidade?”",
+    "prompt": "Analise como o sistema interage e se adapta a outros sistemas ao seu redor, mantendo trocas e interdependências sem perder sua identidade ou autonomia; direcione essas interações para que a coevolução fortaleça ambos os lados, preservando características essenciais enquanto incorpora melhorias necessárias ao longo do tempo."
+  },
+  {
+    "categoria": "Pensar simbólico (narrativo)",
+    "nome": "Wu Wei (aplicado)",
+    "autor": "Laozi",
+    "periodo": "China, séc. IV a.C.",
+    "descricao": "Agir em consonância com o fluxo do Tao.",
+    "perguntaOrigem": "“Onde estou forçando? O que acontece se eu alinhar e reduzir atrito?”",
+    "prompt": "Observe onde há esforço excessivo ou resistência artificial, reduza a imposição de força direta e alinhe suas ações ao fluxo natural dos eventos, permitindo que o movimento ocorra com menor atrito; ajuste o ritmo, acolha a mudança e responda com flexibilidade, usando a harmonia com o contexto como fonte de eficácia e direção."
+  },
+  {
+    "categoria": "Pensar simbólico (narrativo)",
+    "nome": "Mito da Caverna",
+    "autor": "Platão",
+    "periodo": "Grécia, séc. IV a.C.",
+    "descricao": "A realidade percebida pode ser apenas uma sombra da realidade verdadeira.",
+    "perguntaOrigem": "“Se o que vejo for apenas sombra, qual é a realidade por trás dela?”",
+    "prompt": "Questione se o que percebe é apenas uma sombra da realidade subjacente, investigue quais estruturas, causas e verdades podem estar ocultas por trás das aparências e direcione seu raciocínio para descobrir o que permanece constante e mais profundo do que a superfície sensorial, evitando conclusões baseadas apenas na ilusão imediata."
+  },
+  {
+    "categoria": "Pensar simbólico (narrativo)",
+    "nome": "Eterno Retorno",
+    "autor": "Friedrich Nietzsche",
+    "periodo": "Alemanha, séc. XIX",
+    "descricao": "Viver como se cada ato fosse se repetir infinitamente.",
+    "perguntaOrigem": "“Se eu tivesse que viver esta decisão infinitas vezes, ainda faria?”",
+    "prompt": "Avalie cada decisão imaginando que ela se repetirá infinitamente, e só siga adiante se estiver disposto a assumir esse ciclo eterno e suas consequências recorrentes; use essa perspectiva para alinhar escolhas ao que você realmente considera digno, significativo e sustentável ao longo de toda uma vida."
+  },
+  {
+    "categoria": "Pensar simbólico (narrativo)",
+    "nome": "Tragédia dos Comuns",
+    "autor": "Garrett Hardin (ideia em 1833 de William Forster Lloyd, popularizada em 1968)",
+    "periodo": "Inglaterra/EUA, séc. XIX–XX",
+    "descricao": "Recursos coletivos tendem a se esgotar pelo uso individualista.",
+    "perguntaOrigem": "“Se todos fizerem como eu, qual será o destino do recurso comum?”",
+    "prompt": "Considere o impacto coletivo de sua ação: se todos agirem como você, analise o destino do recurso compartilhado e ajuste seu comportamento para proteger a sustentabilidade do bem comum, equilibrando interesses individuais com responsabilidade coletiva para evitar esgotamento e colapso do sistema."
+  },
+  {
+    "categoria": "Pensar simbólico (narrativo)",
+    "nome": "Leviatã",
+    "autor": "Thomas Hobbes",
+    "periodo": "Inglaterra, 1651",
+    "descricao": "O Estado como “monstro” que garante ordem social.",
+    "perguntaOrigem": "“Que ordem maior (Leviatã) sustenta este sistema e o que acontece se falhar?”",
+    "prompt": "Identifique a estrutura central de autoridade que sustenta a ordem e coordena o coletivo, avalie como ela controla conflitos e garante estabilidade e considere o que aconteceria se esse mecanismo falhasse, usando essa análise para fortalecer instituições e preservar a coesão que impede o colapso social."
+  },
+  {
+    "categoria": "Pensar simbólico (narrativo)",
+    "nome": "Grande Relógio (Universo Mecânico)",
+    "autor": "Isaac Newton + filósofos iluministas",
+    "periodo": "Europa, séc. XVII–XVIII",
+    "descricao": "O universo funciona como uma máquina previsível.",
+    "perguntaOrigem": "“Se este sistema fosse um mecanismo de engrenagens, qual peça moveria o todo?”",
+    "prompt": "Analise o sistema como um mecanismo previsível, identifique a peça central cujo funcionamento movimenta o conjunto e direcione sua atenção para entender, ajustar ou otimizar esse componente chave, garantindo controle e eficiência no comportamento global do sistema."
+  },
+  {
+    "categoria": "Pensar simbólico (narrativo)",
+    "nome": "Mão Invisível",
+    "autor": "Adam Smith",
+    "periodo": "Escócia, 1776",
+    "descricao": "O mercado se regula por interações egoístas que produzem ordem coletiva.",
+    "perguntaOrigem": "“Se cada indivíduo agir pelo próprio interesse, qual ordem emergente surgirá?”",
+    "prompt": "Analise como escolhas individuais guiadas pelo interesse próprio interagem no sistema, identifique quais regras e incentivos moldam essas interações e projete a ordem emergente que pode surgir desse comportamento coletivo, garantindo que as conclusões considerem tanto benefícios quanto possíveis distorções dessa autorregulação."
+  },
+  {
+    "categoria": "Pensar simbólico (narrativo)",
+    "nome": "Complexo de Édipo",
+    "autor": "Sigmund Freud",
+    "periodo": "Áustria, início séc. XX",
+    "descricao": "Desejos e identidades são moldados por conflitos familiares inconscientes.",
+    "perguntaOrigem": "“Que padrões inconscientes herdados moldam as escolhas visíveis?”",
+    "prompt": "Investigue padrões inconscientes herdados da dinâmica familiar, identifique como eles influenciam desejos, decisões e identidades atuais e traga essas forças à consciência para que suas escolhas se tornem mais autônomas e menos determinadas por conflitos ocultos, favorecendo transformação pessoal genuína."
+  },
+  {
+    "categoria": "Pensar simbólico (narrativo)",
+    "nome": "Yin-Yang",
+    "autor": "Filosofia taoísta (China)",
+    "periodo": "~séc. IV a.C.",
+    "descricao": "Opostos complementares se equilibram em ciclos dinâmicos.",
+    "perguntaOrigem": "“Onde está o equilíbrio entre opostos neste dilema?”",
+    "prompt": "Identifique os opostos presentes no dilema e examine como cada um contribui positivamente e limita o sistema; busque o ponto em que ambos coexistem em equilíbrio dinâmico, criando uma solução que aproveita a complementaridade e evita extremos que fragilizam o resultado."
+  },
+  {
+    "categoria": "Pensar simbólico (narrativo)",
+    "nome": "Espírito Absoluto",
+    "autor": "G.W.F. Hegel",
+    "periodo": "Alemanha, séc. XIX",
+    "descricao": "A história é a progressão da consciência rumo à liberdade.",
+    "perguntaOrigem": "“Que síntese histórica maior está emergindo deste conflito?”",
+    "prompt": "Analise o conflito atual como parte de uma evolução da consciência rumo a maior liberdade, identifique a síntese histórica que começa a emergir de tensões entre visões opostas e use essa perspectiva para orientar interpretações e ações que favoreçam o avanço coletivo em direção a formas mais elevadas de autonomia e realização humana."
+  },
+  {
+    "categoria": "Pensar simbólico (narrativo)",
+    "nome": "Caixa de Pandora",
+    "autor": "Mitologia grega",
+    "periodo": "~séc. VIII a.C.",
+    "descricao": "Abrir algo proibido pode liberar forças irreversíveis.",
+    "perguntaOrigem": "“Se eu abrir essa caixa, que consequências incontroláveis podem emergir?”",
+    "prompt": "Antes de agir, avalie se liberar esta ação proibida pode desencadear efeitos irreversíveis ou fora do seu controle; projete os piores desdobramentos possíveis e só prossiga se estiver disposto e preparado para lidar com todas as consequências potenciais, evitando abrir caminhos que não possam ser fechados depois."
+  },
+  {
+    "categoria": "Pensar simbólico (narrativo)",
+    "nome": "Navio de Teseu",
+    "autor": "Plutarco (parábola filosófica grega)",
+    "periodo": "Grécia, séc. I",
+    "descricao": "Explora identidade e mudança: se todas as partes são trocadas, continua sendo o mesmo objeto?",
+    "perguntaOrigem": "“Se tudo mudou em partes, ainda é o mesmo todo?”",
+    "prompt": "Questione se a identidade permanece quando todas as partes mudam: avalie o que define a continuidade do todo além de seus componentes individuais, distinguindo o que é transformação aceitável do que altera a essência; use essa reflexão para decidir se o objeto, sistema ou eu analisado ainda pode ser considerado o mesmo após mudanças completas."
+  },
+  {
+    "categoria": "Pensar simbólico (narrativo)",
+    "nome": "Demônio de Maxwell",
+    "autor": "James Clerk Maxwell",
+    "periodo": "Escócia, 1867",
+    "descricao": "Experimento mental que simboliza os limites da 2ª lei da termodinâmica.",
+    "perguntaOrigem": "“Se houvesse um agente separando eventos improváveis, o que aconteceria?”",
+    "prompt": "Considere um agente capaz de separar eventos improváveis e organizar o sistema de modo a reduzir a entropia; examine como essa intervenção desafia os limites naturais do aumento da desordem, identifique onde surgem custos ocultos ou compensações inevitáveis e use essa análise para entender que qualquer aparente violação da segunda lei exige energia, informação ou trabalho equivalentes para manter a ordem criada."
+  },
+  {
+    "categoria": "Pensar simbólico (narrativo)",
+    "nome": "Genio Maligno",
+    "autor": "René Descartes",
+    "periodo": "França, séc. XVII",
+    "descricao": "Metáfora do engano absoluto que questiona a confiabilidade da percepção.",
+    "perguntaOrigem": "“E se tudo que percebo fosse manipulado por um gênio enganador, o que restaria certo?”",
+    "prompt": "Suponha que todas as percepções sejam manipuladas por um gênio enganador e questione o que ainda pode ser considerado certo sob essa hipótese extrema; mantenha apenas o que resiste a essa dúvida radical e use essa certeza mínima como base sólida para reconstruir conhecimento confiável livre de ilusões possíveis."
+  },
+  {
+    "categoria": "Pensar simbólico (narrativo)",
+    "nome": "Mito de Sísifo",
+    "autor": "Albert Camus (reinterpretando mito grego)",
+    "periodo": "França, 1942",
+    "descricao": "Símbolo do absurdo: repetir eternamente uma tarefa sem sentido.",
+    "perguntaOrigem": "“Se esta tarefa fosse infinita e absurda, como eu lhe daria sentido?”",
+    "prompt": "Considere que a tarefa possa ser infinita e sem propósito evidente, e busque criar sentido a partir da própria ação: escolha uma interpretação, atitude ou valor que transforme o absurdo em afirmação pessoal, permitindo encontrar dignidade e propósito mesmo em rotinas repetitivas e inevitáveis."
+  },
+  {
+    "categoria": "Pensar simbólico (narrativo)",
+    "nome": "Efeito Borboleta",
+    "autor": "Edward Lorenz (teoria do caos)",
+    "periodo": "EUA, 1963",
+    "descricao": "Pequenas causas podem gerar grandes efeitos imprevisíveis.",
+    "perguntaOrigem": "“Qual mínima variação aqui pode desencadear um efeito desproporcional?”",
+    "prompt": "Identifique pequenas variações iniciais com potencial de alterar significativamente o resultado, avalie como essas mudanças podem se amplificar ao longo do sistema e use essa sensibilidade para ajustar intervenções de forma precisa, sabendo que pequenos ajustes podem gerar impactos desproporcionais e imprevisíveis."
+  }
+]

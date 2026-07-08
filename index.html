@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f1eee7">
+  <title>Briefing interativo — Dispo</title>
+  <meta name="description" content="Um briefing cuidadoso para dar forma ao seu próximo projeto.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-view="intro">
+  <div class="grain" aria-hidden="true"></div>
+  <div class="cosmos" id="cosmos" aria-hidden="true">
+    <div class="armillary">
+      <i class="arm-ring ring-equator"></i>
+      <i class="arm-ring ring-meridian-a"></i>
+      <i class="arm-ring ring-meridian-b"></i>
+      <i class="arm-ring ring-tropic-a"></i>
+      <i class="arm-ring ring-tropic-b"></i>
+      <i class="arm-ring ring-ecliptic"></i>
+      <i class="arm-axis"></i>
+    </div>
+  </div>
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="Dispo — início">
+      <img src="logo-dispo.svg" alt="Dispo">
+    </a>
+  </header>
+
+  <main>
+    <section class="screen intro active" id="introScreen">
+      <div class="intro-copy reveal">
+        <p class="eyebrow">Briefing de marca · 2026</p>
+        <h1>Boas ideias <br class="break-desktop">começam com boas perguntas.</h1>
+        <div class="intro-split">
+          <p class="intro-split-meta">As informações <br class="break-desktop">que vamos usar <br class="break-desktop">para criar a <br class="break-desktop">direção visual.</p>
+          <p class="lead">Este briefing reúne as informações que vamos usar para criar a direção visual da sua marca. Responda com exemplos, links e observações práticas. Quanto mais claro for o ponto de partida, mais precisa será a criação.</p>
+        </div>
+        <div class="intro-actions">
+          <button class="primary-button" id="startButton" type="button"><span class="btn-label">Começar briefing</span><span class="btn-icon">→</span></button>
+          <span>Leva cerca de 10 minutos</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen question-screen" id="questionScreen" aria-live="polite">
+      <div class="progress-wrap">
+        <div class="progress-meta">
+          <span id="sectionLabel">01 — Essencial</span>
+          <span id="progressCount">01 / 01</span>
+        </div>
+        <div class="progress-track"><span id="progressBar"></span></div>
+      </div>
+
+      <article class="question-card" id="questionCard">
+        <div class="question-number" id="questionNumber">01</div>
+        <div class="question-content">
+          <p class="topic" id="topicLabel"></p>
+          <h2 id="questionText"></h2>
+          <p class="hint" id="questionHint"></p>
+          <div class="answer-field" id="answerField">
+            <label id="answerLabel">
+              <span class="sr-only">Sua resposta</span>
+              <textarea id="answerInput" rows="4" placeholder="Escreva com suas palavras..."></textarea>
+            </label>
+            <div class="choice-group" id="choiceGroup"></div>
+            <div class="slider-group" id="sliderGroup">
+              <div class="slider-track">
+                <input type="range" id="sliderRange" min="1" max="5" step="1" value="3">
+                <div class="slider-ticks" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+              </div>
+              <div class="slider-sides">
+                <div class="slider-side">
+                  <strong id="sliderLeftLabel"></strong>
+                  <span id="sliderLeftExamples"></span>
+                  <p id="sliderLeftDesc"></p>
+                </div>
+                <div class="slider-side right">
+                  <strong id="sliderRightLabel"></strong>
+                  <span id="sliderRightExamples"></span>
+                  <p id="sliderRightDesc"></p>
+                </div>
+              </div>
+            </div>
+            <label class="note-field" id="noteField">
+              <span id="noteLabel"></span>
+              <textarea id="noteInput" rows="2" placeholder="Escreva aqui..."></textarea>
+            </label>
+          </div>
+          <div class="question-actions">
+            <button class="back-button" id="backButton" type="button">← <span>Anterior</span></button>
+            <div class="next-group">
+              <button class="skip-button" id="skipButton" type="button">Prefiro responder depois</button>
+              <button class="next-button" id="nextButton" type="button"><span class="btn-label">Continuar</span><span class="btn-icon">→</span></button>
+            </div>
+          </div>
+        </div>
+      </article>
+      <p class="keyboard-tip">Role ou pressione <kbd>Ctrl</kbd> + <kbd>Enter</kbd> para continuar</p>
+      <nav class="mini-nav" id="sectionNav" aria-label="Seções do briefing"></nav>
+    </section>
+
+    <section class="screen section-break" id="sectionScreen">
+      <p class="eyebrow" id="breakIndex">Seção 01</p>
+      <h2 id="breakTitle"></h2>
+      <p id="breakDescription"></p>
+      <button class="primary-button" id="sectionContinue" type="button"><span class="btn-label">Entrar nesta seção</span><span class="btn-icon">→</span></button>
+    </section>
+
+    <section class="screen completion" id="completionScreen">
+      <div class="completion-mark"><svg width="16" height="12" viewBox="0 0 16 12" fill="none" aria-hidden="true"><path d="M1 6.2L5.6 10.8L15 1.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="square"/></svg></div>
+      <p class="eyebrow">Briefing enviado</p>
+      <h2 id="completionTitle">Agora temos um bom lugar para começar.</h2>
+      <p id="completionText">Suas respostas foram enviadas para processamento. A partir daqui, elas serão organizadas em uma direção visual para a criação da sua marca.</p>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

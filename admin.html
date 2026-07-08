@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f1eee7">
+  <title>Hub — Briefing Dispo</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body data-view="login">
+  <div class="grain" aria-hidden="true"></div>
+
+  <section id="loginScreen" class="screen login-screen">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Dispo"><img src="logo-dispo.svg" alt="Dispo"></a>
+    </header>
+    <div class="login-card reveal">
+      <p class="eyebrow">Hub — acesso restrito</p>
+      <h1>Entrar</h1>
+      <label>E-mail<input type="email" id="loginEmail" autocomplete="username"></label>
+      <label>Senha<input type="password" id="loginPassword" autocomplete="current-password"></label>
+      <button class="primary-button" id="loginButton" type="button"><span class="btn-label">Entrar</span><span class="btn-icon">→</span></button>
+      <p class="login-error" id="loginError"></p>
+    </div>
+  </section>
+
+  <section id="hubScreen" class="screen hub-screen" style="display:none">
+    <header class="topbar hub-topbar">
+      <a class="brand" href="#" aria-label="Dispo"><img src="logo-dispo.svg" alt="Dispo"></a>
+      <button class="text-button" id="logoutButton" type="button">Sair</button>
+    </header>
+
+    <div class="hub-intro">
+      <p class="eyebrow">Hub interno</p>
+      <h1>Briefings recebidos</h1>
+    </div>
+
+    <div class="hub-body">
+      <aside class="briefing-list" id="briefingList"></aside>
+      <main class="briefing-detail" id="briefingDetail">
+        <p class="empty-state">Selecione um briefing na lista ao lado.</p>
+      </main>
+    </div>
+  </section>
+
+  <div id="printArea" class="print-area" aria-hidden="true"></div>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
