@@ -414,7 +414,8 @@ async function submitBriefing() {
     const formatted = formatAnswer(q);
     if (formatted) readableAnswers[q.text] = formatted;
   });
-  const { error } = await client.from("briefings").insert({ answers: readableAnswers });
+  const clientName = state.answers.q1 || null;
+  const { error } = await client.from("briefings").insert({ answers: readableAnswers, client_name: clientName });
   if (error) { toast("Não foi possível enviar o briefing para a nuvem"); return; }
   state.submitted = true;
   persist();
