@@ -10,7 +10,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const MODEL_RASCUNHO = "gemini-2.5-flash-lite";   // caminhos, autocrítica, iteração interna
+const MODEL_RASCUNHO = "gemini-2.5-flash";   // caminhos, autocrítica, iteração interna
 const MODEL_FINAL = "gemini-2.5-flash";           // síntese final: persona + prompt de imagem
 
 // TODO: cole aqui o conteúdo real da sua planilha de modelos mentais.
