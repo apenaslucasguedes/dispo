@@ -99,8 +99,8 @@ button { cursor: pointer; }
 
 .briefing-list { display: flex; flex-direction: column; gap: 10px; max-height: 82vh; overflow-y: auto; overflow-x: clip; }
 .briefing-item-wrap { position: relative; }
-.briefing-item { width: 100%; border: 1px solid var(--line); border-radius: 14px; padding: 15px 60px 15px 17px; background: #fff; text-align: left; transition: border-color .2s, border-width .2s, transform .2s; }
-.briefing-item:hover { border-color: var(--ink); transform: translateY(-1px); }
+.briefing-item { width: 100%; border: 1px solid var(--line); border-radius: 14px; padding: 15px 100px 34px 17px; background: #fff; text-align: left; transition: border-color .2s, border-width .2s; }
+.briefing-item:hover { border-color: var(--ink); }
 .briefing-item.active { border-width: 2px; border-color: var(--ink); }
 .briefing-item small { display: block; color: var(--muted); font-size: 11px; margin-bottom: 5px; }
 .briefing-item strong { display: block; font-size: 15px; font-weight: 600; }
@@ -110,6 +110,15 @@ button { cursor: pointer; }
 .icon-button svg { width: 13px; height: 13px; }
 .icon-button:hover { border-color: var(--ink); color: var(--ink); }
 .icon-button.danger:hover { border-color: #a32c22; color: #a32c22; }
+
+/* --- Toggle de IA no card (estratégia) --- */
+.item-ai { position: absolute; bottom: 12px; right: 14px; display: flex; gap: 5px; z-index: 2; }
+.ai-seg { width: 26px; height: 26px; border: 1px solid var(--line); background: #fff; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; color: var(--muted); transition: border-color .18s, color .18s, background .18s; }
+.ai-seg svg { width: 15px; height: 15px; }
+.ai-seg:hover { border-color: var(--ink); }
+.ai-seg.on { color: #fff; }
+.ai-seg.on[data-ai="claude"] { background: #d97757; border-color: #d97757; }
+.ai-seg.on[data-ai="gpt"] { background: #10a37f; border-color: #10a37f; }
 .status-badge { display: inline-block; font-size: 10px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; padding: 4px 10px; border-radius: 999px; margin-top: 8px; }
 .status-recebido { background: var(--paper-deep); color: var(--ink); }
 .status-processando { background: #f4dfa8; color: #5c4711; }
@@ -197,6 +206,16 @@ button { cursor: pointer; }
 .unit-head strong { flex: 1; font-size: 14px; }
 .unit-scope { font-size: 12px; color: var(--muted); margin: 0 0 8px; }
 
+/* --- Seleção da ferramenta de imagem usada na unidade --- */
+.unit-tools { margin: 4px 0 12px; }
+.unit-tools-label { display: block; font-size: 11px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin-bottom: 7px; }
+.unit-tools-row { display: flex; flex-wrap: wrap; gap: 7px; }
+.tool-chip { display: inline-flex; align-items: center; gap: 7px; padding: 5px 11px 5px 6px; border: 1px solid var(--line); border-radius: 100px; background: #fff; font-size: 12px; font-weight: 500; color: var(--muted); transition: border-color .18s, color .18s, background .18s; }
+.tool-chip:hover { border-color: var(--ink); color: var(--ink); }
+.tool-chip .tool-mono { width: 20px; height: 20px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #fff; line-height: 1; }
+.tool-chip.on { color: var(--ink); border-color: var(--ink); background: var(--paper); }
+.tool-chip.on { box-shadow: inset 0 0 0 1px var(--ink); }
+
 /* --- Modal da Biblioteca Estratégica --- */
 .modal-overlay { position: fixed; inset: 0; z-index: 40; background: rgba(17,17,15,.5); display: none; align-items: center; justify-content: center; padding: var(--edge); }
 .modal-overlay.open { display: flex; }
@@ -251,22 +270,14 @@ button { cursor: pointer; }
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
 
-/* --- Tooltip (data-tooltip="texto" em qualquer elemento) --- */
-[data-tooltip] { position: relative; }
-[data-tooltip]::after {
-  content: attr(data-tooltip);
-  position: absolute; left: 50%; bottom: calc(100% + 9px); transform: translateX(-50%) translateY(4px);
+/* --- Tooltip flutuante (fixed no <body>, nunca cortado por container) --- */
+.tip-float {
+  position: fixed; top: 0; left: 0; z-index: 1000;
   background: var(--ink); color: var(--paper); font-size: 11px; font-weight: 500; line-height: 1.35;
-  padding: 7px 11px; border-radius: 9px; white-space: normal; width: max-content; max-width: 220px; text-align: center;
-  opacity: 0; pointer-events: none; transition: opacity .16s ease, transform .16s ease; z-index: 60;
+  padding: 7px 11px; border-radius: 9px; max-width: 240px; text-align: center;
+  opacity: 0; pointer-events: none; transition: opacity .16s ease; box-shadow: 0 6px 20px rgba(17,17,15,.18);
 }
-[data-tooltip]::before {
-  content: ""; position: absolute; left: 50%; bottom: calc(100% + 4px); transform: translateX(-50%);
-  border: 5px solid transparent; border-top-color: var(--ink);
-  opacity: 0; transition: opacity .16s ease; pointer-events: none; z-index: 60;
-}
-[data-tooltip]:hover::after, [data-tooltip]:focus-visible::after,
-[data-tooltip]:hover::before, [data-tooltip]:focus-visible::before { opacity: 1; transform: translateX(-50%) translateY(0); }
+.tip-float.show { opacity: 1; }
 @media (max-width: 640px) {
-  [data-tooltip]::after, [data-tooltip]::before { display: none; }
+  .tip-float { display: none; }
 }

@@ -18,6 +18,25 @@ const ICON_REJECT = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" 
 const ICON_SKIP = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v10"/><path d="M6.3 8l6-4.3v8.6z"/></svg>`;
 const ICON_DRAFT = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="5.8" stroke-dasharray="2.4 2.6"/></svg>`;
 const ICON_COPY = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5"/><path d="M10.5 5.5V4a1.5 1.5 0 0 0-1.5-1.5H4A1.5 1.5 0 0 0 2.5 4v5A1.5 1.5 0 0 0 4 10.5h1.5"/></svg>`;
+const ICON_DUPLICATE = `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="9" height="9" rx="2"/><path d="M13 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/></svg>`;
+
+// Ícones das IAs de estratégia (toggle no card, sem texto)
+const ICON_AI_CLAUDE = `<svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 1.2l1.35 5.05L15.1 2.5l-2.05 4.55L18.8 5l-4.05 3.9 5.25 1.1-5.25 1.1L18.8 15l-5.75-1.55L15.1 18l-3.75-3.75L10 19.8l-1.35-5.55L4.9 18l2.05-4.55L1.2 15l4.05-3.9L0 10l5.25-1.1L1.2 5l5.75 2.05L4.9 2.5l3.75 3.75z"/></svg>`;
+const ICON_AI_GPT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)"/></svg>`;
+
+// IAs de estratégia (uma por briefing) e ferramentas de imagem (uma por unidade)
+const STRATEGY_AIS = [
+  { id: "claude", label: "Claude", icon: ICON_AI_CLAUDE },
+  { id: "gpt",    label: "GPT",    icon: ICON_AI_GPT },
+];
+const IMAGE_TOOLS = [
+  { id: "gpt",        label: "GPT",       color: "#10a37f", mono: "G" },
+  { id: "gemini",     label: "Gemini",    color: "#4285f4", mono: "◆" },
+  { id: "midjourney", label: "MidJourney", color: "#111111", mono: "MJ" },
+  { id: "flux",       label: "Flux",      color: "#7c3aed", mono: "Fx" },
+  { id: "leonardo",   label: "Leonardo",  color: "#f59e0b", mono: "L" },
+  { id: "sd",         label: "SD / Dream", color: "#e11d6b", mono: "SD" },
+];
 
 // ---------------------------------------------------------------------------
 // Estados de aprovação por etapa (documento, seção 4.6)
@@ -397,6 +416,50 @@ function formatBriefingText(answers) {
 }
 function nowIso() { return new Date().toISOString(); }
 
+// Ordem linear das etapas colapsáveis (para "concluir e abrir a próxima")
+const ORDERED_STEP_KEYS = PIPELINE.map(s => s.key);
+function openNextStep(key) {
+  openSteps.delete(key);
+  const i = ORDERED_STEP_KEYS.indexOf(key);
+  const next = ORDERED_STEP_KEYS[i + 1];
+  if (next) openSteps.add(next);
+}
+
+// --- Tooltip flutuante (fixed no body, imune a overflow/clip dos containers) --
+let tipEl;
+function ensureTip() {
+  if (!tipEl) { tipEl = document.createElement("div"); tipEl.className = "tip-float"; document.body.appendChild(tipEl); }
+  return tipEl;
+}
+function showTip(el) {
+  const tip = ensureTip();
+  tip.textContent = el.getAttribute("data-tooltip");
+  tip.classList.add("show");
+  const r = el.getBoundingClientRect();
+  const tr = tip.getBoundingClientRect();
+  let top = r.top - tr.height - 8;
+  if (top < 6) top = r.bottom + 8;                       // sem espaço acima → abre abaixo
+  let left = r.left + r.width / 2 - tr.width / 2;
+  left = Math.max(6, Math.min(left, window.innerWidth - tr.width - 6));
+  tip.style.top = `${Math.round(top)}px`;
+  tip.style.left = `${Math.round(left)}px`;
+}
+function hideTip() { if (tipEl) tipEl.classList.remove("show"); }
+document.addEventListener("mouseover", e => {
+  const t = e.target.closest && e.target.closest("[data-tooltip]");
+  if (t) showTip(t);
+});
+document.addEventListener("mouseout", e => {
+  const t = e.target.closest && e.target.closest("[data-tooltip]");
+  if (t) hideTip();
+});
+document.addEventListener("focusin", e => {
+  const t = e.target.closest && e.target.closest("[data-tooltip]");
+  if (t) showTip(t);
+});
+document.addEventListener("focusout", hideTip);
+window.addEventListener("scroll", hideTip, true);
+
 // --- Pipeline data (armazenado em briefings.result) -------------------------
 function getPipeline(b) {
   const r = b && b.result;
@@ -590,6 +653,10 @@ function pipelineProgress(b) {
 function renderList() {
   $("briefingList").innerHTML = briefings.map(b => {
     const pr = pipelineProgress(b);
+    const activeAi = getPipeline(b).aiTool;
+    const aiToggle = STRATEGY_AIS.map(a =>
+      `<button class="ai-seg ${activeAi === a.id ? "on" : ""}" type="button" data-ai="${a.id}" data-ai-briefing="${b.id}" aria-label="Marcar ${a.label}" data-tooltip="Feito no ${a.label}">${a.icon}</button>`
+    ).join("");
     return `
     <div class="briefing-item-wrap">
       <button class="briefing-item ${b.id === activeId ? "active" : ""}" data-id="${b.id}">
@@ -602,8 +669,10 @@ function renderList() {
       </button>
       <div class="item-actions">
         <button class="icon-button" type="button" data-edit-id="${b.id}" aria-label="Editar nome" data-tooltip="Renomear este briefing">${ICON_EDIT}</button>
+        <button class="icon-button" type="button" data-duplicate-id="${b.id}" aria-label="Duplicar" data-tooltip="Duplicar este briefing (ex.: rodar a mesma estratégia em outra IA)">${ICON_DUPLICATE}</button>
         <button class="icon-button danger" type="button" data-delete-id="${b.id}" aria-label="Excluir" data-tooltip="Excluir este briefing (não pode ser desfeito)">${ICON_DELETE}</button>
       </div>
+      <div class="item-ai">${aiToggle}</div>
     </div>`;
   }).join("") || `<p class="empty-state">Nenhum briefing recebido ainda.</p>`;
 
@@ -615,9 +684,42 @@ function renderList() {
   document.querySelectorAll("[data-edit-id]").forEach(btn => btn.addEventListener("click", e => {
     e.stopPropagation(); renameBriefing(btn.dataset.editId);
   }));
+  document.querySelectorAll("[data-duplicate-id]").forEach(btn => btn.addEventListener("click", e => {
+    e.stopPropagation(); duplicateBriefing(btn.dataset.duplicateId);
+  }));
   document.querySelectorAll("[data-delete-id]").forEach(btn => btn.addEventListener("click", e => {
     e.stopPropagation(); deleteBriefing(btn.dataset.deleteId);
   }));
+  document.querySelectorAll("[data-ai-briefing]").forEach(btn => btn.addEventListener("click", e => {
+    e.stopPropagation(); setStrategyAi(btn.dataset.aiBriefing, btn.dataset.ai);
+  }));
+}
+
+async function duplicateBriefing(id) {
+  const b = briefings.find(x => x.id === id);
+  if (!b) return;
+  const p = getPipeline(b);
+  const copy = JSON.parse(JSON.stringify(p));
+  delete copy.aiTool;                         // a cópia começa sem IA marcada
+  const anyStarted = Object.values(copy.steps || {}).some(s => s.status && s.status !== "pendente");
+  const status = copy.dossieFinalizado ? "pronto" : (anyStarted ? "processando" : "recebido");
+  const { error } = await client.from("briefings").insert({
+    answers: b.answers,
+    client_name: `${b.client_name || "Briefing sem nome"} (cópia)`,
+    result: copy,
+    status,
+  });
+  if (error) { toast("Erro ao duplicar"); return; }
+  toast("Briefing duplicado");
+  await loadBriefings();
+}
+
+async function setStrategyAi(id, aiId) {
+  const b = briefings.find(x => x.id === id);
+  if (!b) return;
+  const p = getPipeline(b);
+  p.aiTool = p.aiTool === aiId ? null : aiId;   // clicar de novo desmarca
+  if (await savePipeline(b, p)) await loadBriefings();
 }
 
 async function renameBriefing(id) {
@@ -684,6 +786,10 @@ function buildDossie(b) {
       lines.push(`### ${meta.label} — ${(STEP_STATES[u.status] || {}).label || u.status}`);
       if (u.promptClean) { lines.push("```prompt"); lines.push(u.promptClean); lines.push("```"); }
       if (u.negative) { lines.push("```prompt"); lines.push(`${u.promptClean || ""}`.trim()); lines.push(`NEGATIVE: ${u.negative}`); lines.push("```"); }
+      if (u.imageTool) {
+        const t = IMAGE_TOOLS.find(x => x.id === u.imageTool);
+        lines.push(`Ferramenta: ${t ? t.label : u.imageTool}`);
+      }
       if (u.notes) lines.push(`Avaliação: ${u.notes}`);
       lines.push("");
     });
@@ -831,6 +937,12 @@ NEGATIVE: ${meta.block}
         <label class="step-notes-label">NEGATIVE
           <input class="unit-negative" data-unit="${i}" type="text" value="${escapeHtml(u.negative || "")}" placeholder="${escapeHtml(meta.block)}">
         </label>
+        <div class="unit-tools">
+          <span class="unit-tools-label">Ferramenta que deu bom</span>
+          <div class="unit-tools-row">
+            ${IMAGE_TOOLS.map(t => `<button class="tool-chip ${u.imageTool === t.id ? "on" : ""}" type="button" data-unit-tool="${t.id}" data-unit="${i}" data-tooltip="Marcar que a imagem boa veio do ${t.label}"><span class="tool-mono" style="background:${t.color}">${t.mono}</span>${t.label}</button>`).join("")}
+          </div>
+        </div>
         <label class="step-notes-label">Avaliação do resultado
           <input class="unit-notes" data-unit="${i}" type="text" value="${escapeHtml(u.notes || "")}" placeholder="Aprovar, rejeitar, refinar...">
         </label>
@@ -953,6 +1065,8 @@ function renderDetail() {
     btn.addEventListener("click", () => saveVisualUnit(b, Number(btn.dataset.unit), btn.dataset.unitState)));
   detail.querySelectorAll("[data-del-unit]").forEach(btn =>
     btn.addEventListener("click", () => removeVisualUnit(b, Number(btn.dataset.delUnit))));
+  detail.querySelectorAll("[data-unit-tool]").forEach(btn =>
+    btn.addEventListener("click", () => setUnitTool(b, Number(btn.dataset.unit), btn.dataset.unitTool)));
 }
 
 // ---------------------------------------------------------------------------
@@ -979,7 +1093,8 @@ async function saveStep(b, key, status) {
   };
   if (await savePipeline(b, p)) {
     toast(`${STEP_BY_KEY[key].title}: ${(STEP_STATES[status] || {}).label || status}`);
-    if (status === "aprovado") openSteps.delete(key);
+    // Botões que concluem a etapa fecham o box e já abrem o próximo (dinamismo).
+    if (["aprovado", "revisar", "rejeitado", "pulada"].includes(status)) openNextStep(key);
     await loadBriefings();
   }
 }
@@ -990,7 +1105,7 @@ async function saveStep(b, key, status) {
 async function addVisualUnit(b, unitType) {
   const p = getPipeline(b);
   p.visualUnits = p.visualUnits || [];
-  p.visualUnits.push({ unitType, status: "pendente", promptClean: "", negative: "", notes: "", updatedAt: nowIso() });
+  p.visualUnits.push({ unitType, status: "pendente", promptClean: "", negative: "", notes: "", imageTool: null, updatedAt: nowIso() });
   if (await savePipeline(b, p)) { toast("Unidade adicionada"); await loadBriefings(); }
 }
 function readUnitInputs(i) {
@@ -1013,6 +1128,17 @@ async function saveVisualUnit(b, i, status) {
   if (status) u.status = status;
   u.updatedAt = nowIso();
   if (await savePipeline(b, p)) { toast(status ? (STEP_STATES[status] || {}).label : "Unidade salva"); await loadBriefings(); }
+}
+async function setUnitTool(b, i, toolId) {
+  const p = getPipeline(b);
+  const u = (p.visualUnits || [])[i]; if (!u) return;
+  const live = readUnitInputs(i);               // preserva texto ainda não salvo
+  if (live.promptClean !== undefined) u.promptClean = live.promptClean.trim();
+  if (live.negative !== undefined) u.negative = live.negative.trim();
+  if (live.notes !== undefined) u.notes = live.notes;
+  u.imageTool = u.imageTool === toolId ? null : toolId;   // clicar de novo desmarca
+  u.updatedAt = nowIso();
+  if (await savePipeline(b, p)) await loadBriefings();
 }
 async function removeVisualUnit(b, i) {
   if (!window.confirm("Remover esta unidade visual?")) return;
