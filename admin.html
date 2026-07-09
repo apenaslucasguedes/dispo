@@ -72,6 +72,23 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="answersModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <p class="eyebrow">Formulário do cliente</p>
+          <h2>Respostas do briefing</h2>
+          <p class="modal-meta" id="answersModalMeta"></p>
+        </div>
+        <button class="text-button" id="answersModalCloseButton" type="button">Fechar</button>
+      </div>
+      <div class="answers-grid" id="answersModalBody"></div>
+      <div class="modal-actions">
+        <button class="ghost-button" id="answersModalCopyButton" type="button">Copiar respostas</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast" role="status"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

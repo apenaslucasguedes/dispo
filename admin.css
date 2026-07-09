@@ -124,16 +124,17 @@ button { cursor: pointer; }
 .detail-meta { color: var(--muted); font-size: 12.5px; }
 .detail-toolbar { display: flex; gap: 10px; flex-wrap: wrap; }
 
-.detail-section { margin-bottom: 30px; }
-.detail-section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
-.detail-section-head-left { display: flex; align-items: center; gap: 10px; background: none; border: 0; padding: 0; cursor: pointer; color: inherit; text-align: left; }
-.detail-section-head h3 { font-size: 13.5px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin: 0; font-family: var(--sans); font-weight: 600; }
-.section-toggle-icon { width: 10px; height: 10px; flex-shrink: 0; margin-top: -1px; transition: transform .2s; color: var(--muted); }
-.section-toggle-icon.collapsed { transform: rotate(-90deg); }
-.detail-section .section-text { white-space: pre-wrap; font-family: var(--sans); font-size: 14.5px; line-height: 1.65; margin: 0; color: #26241f; }
 .answers-grid { display: grid; gap: 16px; }
 .answers-grid .qa strong { display: block; font-size: 13.5px; margin-bottom: 5px; }
 .answers-grid .qa span { display: block; white-space: pre-wrap; color: #403e38; font-size: 14px; line-height: 1.55; }
+
+/* --- Respostas do briefing: resumo clicável (abre modal, fechado por padrão) --- */
+.answers-summary { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 16px; background: #fff; border: 1px solid var(--line); border-radius: 13px; padding: 16px 20px; margin-bottom: 30px; text-align: left; color: inherit; transition: border-color .2s, transform .2s; }
+.answers-summary:hover { border-color: var(--ink); transform: translateY(-1px); }
+.answers-summary-text h3 { font-size: 14.5px; font-weight: 600; margin: 0 0 4px; font-family: var(--sans); }
+.answers-summary-count { font-size: 12px; color: var(--muted); }
+.answers-summary-icon { flex-shrink: 0; width: 10px; height: 10px; color: var(--muted); }
+.answers-summary-icon svg { display: block; transform: rotate(-90deg); }
 
 /* --- Lista: progresso do pipeline --- */
 .status-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
@@ -178,6 +179,8 @@ button { cursor: pointer; }
 .approve-button { border: 1px solid #1f4a1a; background: #cfe3cc; color: #1f4a1a; border-radius: 100px; padding: 8px 18px; font-size: 12.5px; font-weight: 600; transition: background .2s, transform .2s; }
 .approve-button:hover { background: #bfd9bb; transform: translateY(-1px); }
 .empty-state.small { font-size: 13px; margin: 8px 0; }
+.icon-label { display: inline-flex; align-items: center; gap: 6px; }
+.icon-label svg { width: 13px; height: 13px; flex-shrink: 0; }
 
 /* --- Unidades visuais --- */
 .units-block { padding-top: 4px; }
@@ -243,4 +246,24 @@ button { cursor: pointer; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
+/* --- Tooltip (data-tooltip="texto" em qualquer elemento) --- */
+[data-tooltip] { position: relative; }
+[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute; left: 50%; bottom: calc(100% + 9px); transform: translateX(-50%) translateY(4px);
+  background: var(--ink); color: var(--paper); font-size: 11px; font-weight: 500; line-height: 1.35;
+  padding: 7px 11px; border-radius: 9px; white-space: normal; width: max-content; max-width: 220px; text-align: center;
+  opacity: 0; pointer-events: none; transition: opacity .16s ease, transform .16s ease; z-index: 60;
+}
+[data-tooltip]::before {
+  content: ""; position: absolute; left: 50%; bottom: calc(100% + 4px); transform: translateX(-50%);
+  border: 5px solid transparent; border-top-color: var(--ink);
+  opacity: 0; transition: opacity .16s ease; pointer-events: none; z-index: 60;
+}
+[data-tooltip]:hover::after, [data-tooltip]:focus-visible::after,
+[data-tooltip]:hover::before, [data-tooltip]:focus-visible::before { opacity: 1; transform: translateX(-50%) translateY(0); }
+@media (max-width: 640px) {
+  [data-tooltip]::after, [data-tooltip]::before { display: none; }
 }

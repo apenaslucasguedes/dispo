@@ -6,12 +6,17 @@ let channel;
 let copyTargets = [];
 let libraryMarkdown = "";      // Biblioteca Estratégica em Markdown, pronta pra colar
 let libraryMeta = { count: 0, version: "—" };
-const collapsedAnswers = new Set();
+let answersModalText = "";      // texto plano das respostas, pro botão "Copiar" do modal
 const openSteps = new Set();    // etapas expandidas no painel (por stepKey)
 
 const ICON_EDIT = `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 3.5l3 3L6 17H3v-3L13.5 3.5z"/></svg>`;
 const ICON_DELETE = `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h12M8 6V4h4v2M6 6l1 10h6l1-10"/></svg>`;
 const ICON_CHEVRON = `<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4.5L6 8l3.5-3.5"/></svg>`;
+const ICON_CHECK = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.3l3.3 3.3L13 4.5"/></svg>`;
+const ICON_FLAG = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14V2"/><path d="M4 3h8l-2 3 2 3H4"/></svg>`;
+const ICON_REJECT = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l8 8M12 4l-8 8"/></svg>`;
+const ICON_SKIP = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v10"/><path d="M6.3 8l6-4.3v8.6z"/></svg>`;
+const ICON_DRAFT = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="5.8" stroke-dasharray="2.4 2.6"/></svg>`;
 
 // ---------------------------------------------------------------------------
 // Estados de aprovação por etapa (documento, seção 4.6)
@@ -518,6 +523,20 @@ function openLibraryModal() {
   overlay.classList.add("open");
 }
 function closeLibraryModal() { $("libraryModal").classList.remove("open"); }
+
+// ---------------------------------------------------------------------------
+// Modal de respostas do briefing (fechado por padrão, some com o resumo)
+// ---------------------------------------------------------------------------
+function openAnswersModal(b) {
+  const entries = Object.entries(b.answers || {});
+  answersModalText = entries.map(([q, a]) => `${q}\n${a}`).join("\n\n");
+  $("answersModalMeta").textContent = `${entries.length} pergunta${entries.length === 1 ? "" : "s"} respondida${entries.length === 1 ? "" : "s"}`;
+  $("answersModalBody").innerHTML = entries.length
+    ? entries.map(([q, a]) => `<div class="qa"><strong>${escapeHtml(q)}</strong><span>${escapeHtml(a)}</span></div>`).join("")
+    : `<p class="empty-state small">Nenhuma resposta registrada.</p>`;
+  $("answersModal").classList.add("open");
+}
+function closeAnswersModal() { $("answersModal").classList.remove("open"); }
 function saveLibraryEdit() {
   const val = $("libraryTextarea").value.trim();
   localStorage.setItem(LIBRARY_OVERRIDE_KEY, val);
@@ -560,8 +579,8 @@ function renderList() {
         </span>
       </button>
       <div class="item-actions">
-        <button class="icon-button" type="button" data-edit-id="${b.id}" aria-label="Editar nome" title="Editar nome">${ICON_EDIT}</button>
-        <button class="icon-button danger" type="button" data-delete-id="${b.id}" aria-label="Excluir" title="Excluir">${ICON_DELETE}</button>
+        <button class="icon-button" type="button" data-edit-id="${b.id}" aria-label="Editar nome" data-tooltip="Renomear este briefing">${ICON_EDIT}</button>
+        <button class="icon-button danger" type="button" data-delete-id="${b.id}" aria-label="Excluir" data-tooltip="Excluir este briefing (não pode ser desfeito)">${ICON_DELETE}</button>
       </div>
     </div>`;
   }).join("") || `<p class="empty-state">Nenhum briefing recebido ainda.</p>`;
@@ -712,7 +731,7 @@ function stepCard(b, step) {
     <p class="step-objetivo">${escapeHtml(step.objetivo)}</p>
     <div class="step-prompt-box"><p class="step-prompt-text">${nl2br(prompt)}</p></div>
     <div class="step-actions">
-      <button class="copy-button" type="button" data-copy-index="${idx}">Copiar prompt</button>
+      <button class="copy-button" type="button" data-copy-index="${idx}" data-tooltip="Copiar o prompt pronto para colar num chat de IA">Copiar prompt</button>
     </div>
     <label class="step-response-label">Resposta da IA
       <textarea class="step-response" data-step="${step.key}" rows="6" placeholder="Cole aqui a resposta aprovada ou em rascunho...">${escapeHtml(st.response || "")}</textarea>
@@ -721,11 +740,11 @@ function stepCard(b, step) {
       <input class="step-notes" data-step="${step.key}" type="text" value="${escapeHtml(st.notes || "")}" placeholder="Motivo, ajuste pedido, decisão...">
     </label>
     <div class="step-actions">
-      <button class="ghost-button" type="button" data-save-draft="${step.key}">Salvar rascunho</button>
-      <button class="approve-button" type="button" data-set-state="aprovado" data-step="${step.key}">Aprovar</button>
-      <button class="text-button" type="button" data-set-state="revisar" data-step="${step.key}">Revisar</button>
-      <button class="text-button danger" type="button" data-set-state="rejeitado" data-step="${step.key}">Rejeitar</button>
-      <button class="text-button" type="button" data-set-state="pulada" data-step="${step.key}">Pular</button>
+      <button class="ghost-button icon-label" type="button" data-save-draft="${step.key}" data-tooltip="Guardar o texto sem aprovar. Dá pra continuar editando depois.">${ICON_DRAFT}<span>Salvar rascunho</span></button>
+      <button class="approve-button icon-label" type="button" data-set-state="aprovado" data-step="${step.key}" data-tooltip="Aprovar esta etapa. Só o conteúdo aprovado alimenta as próximas etapas.">${ICON_CHECK}<span>Aprovar</span></button>
+      <button class="text-button icon-label" type="button" data-set-state="revisar" data-step="${step.key}" data-tooltip="Marcar que essa resposta precisa de ajuste antes de aprovar.">${ICON_FLAG}<span>Revisar</span></button>
+      <button class="text-button danger icon-label" type="button" data-set-state="rejeitado" data-step="${step.key}" data-tooltip="Descartar esta resposta. Ela não será usada nas próximas etapas.">${ICON_REJECT}<span>Rejeitar</span></button>
+      <button class="text-button icon-label" type="button" data-set-state="pulada" data-step="${step.key}" data-tooltip="Pular esta etapa. Ela fica marcada como pulada e o fluxo segue sem ela.">${ICON_SKIP}<span>Pular</span></button>
     </div>`;
 
   return `
@@ -734,7 +753,7 @@ function stepCard(b, step) {
         <span class="step-chevron${isOpen ? "" : " collapsed"}">${ICON_CHEVRON}</span>
         <span class="step-num">${step.num}</span>
         <span class="step-title">${escapeHtml(step.title)}</span>
-        <span class="step-state-badge state-${st.status}" title="${state.hint}">${state.label}</span>
+        <span class="step-state-badge state-${st.status}" data-tooltip="${state.hint}">${state.label}</span>
       </button>
       <div class="step-body">${body}</div>
     </div>`;
@@ -777,10 +796,10 @@ NEGATIVE: ${meta.block}
         <div class="unit-head">
           <strong>${meta.label}</strong>
           <span class="step-state-badge state-${u.status}">${state.label}</span>
-          <button class="icon-button danger" type="button" data-del-unit="${i}" title="Remover unidade">${ICON_DELETE}</button>
+          <button class="icon-button danger" type="button" data-del-unit="${i}" aria-label="Remover unidade" data-tooltip="Remover esta unidade visual">${ICON_DELETE}</button>
         </div>
         <p class="unit-scope">Pedir: ${escapeHtml(meta.ask)} · Bloquear: ${escapeHtml(meta.block)}</p>
-        <div class="step-actions"><button class="copy-button" type="button" data-copy-index="${idx}">Copiar prompt de solicitação</button></div>
+        <div class="step-actions"><button class="copy-button" type="button" data-copy-index="${idx}" data-tooltip="Copiar o prompt para colar numa ferramenta de imagem">Copiar prompt de solicitação</button></div>
         <label class="step-response-label">Prompt final (positivo)
           <textarea class="unit-clean" data-unit="${i}" rows="2" placeholder="Prompt limpo da unidade...">${escapeHtml(u.promptClean || "")}</textarea>
         </label>
@@ -791,10 +810,10 @@ NEGATIVE: ${meta.block}
           <input class="unit-notes" data-unit="${i}" type="text" value="${escapeHtml(u.notes || "")}" placeholder="Aprovar, rejeitar, refinar...">
         </label>
         <div class="step-actions">
-          <button class="ghost-button" type="button" data-save-unit="${i}">Salvar</button>
-          <button class="approve-button" type="button" data-unit-state="aprovado" data-unit="${i}">Aprovar</button>
-          <button class="text-button" type="button" data-unit-state="revisar" data-unit="${i}">Revisar</button>
-          <button class="text-button danger" type="button" data-unit-state="rejeitado" data-unit="${i}">Rejeitar</button>
+          <button class="ghost-button icon-label" type="button" data-save-unit="${i}" data-tooltip="Guardar o prompt e a avaliação sem mudar o estado">${ICON_DRAFT}<span>Salvar</span></button>
+          <button class="approve-button icon-label" type="button" data-unit-state="aprovado" data-unit="${i}" data-tooltip="Aprovar esta unidade visual">${ICON_CHECK}<span>Aprovar</span></button>
+          <button class="text-button icon-label" type="button" data-unit-state="revisar" data-unit="${i}" data-tooltip="Marcar que esta unidade precisa de ajuste">${ICON_FLAG}<span>Revisar</span></button>
+          <button class="text-button danger icon-label" type="button" data-unit-state="rejeitado" data-unit="${i}" data-tooltip="Descartar esta unidade visual">${ICON_REJECT}<span>Rejeitar</span></button>
         </div>
       </div>`;
   }).join("");
@@ -803,7 +822,7 @@ NEGATIVE: ${meta.block}
     <div class="units-block">
       <div class="units-add">
         <select id="unitTypeSelect" ${handoffApproved ? "" : "disabled"}>${options}</select>
-        <button class="ghost-button" id="addUnitButton" type="button" ${handoffApproved ? "" : "disabled"}>Adicionar unidade</button>
+        <button class="ghost-button" id="addUnitButton" type="button" ${handoffApproved ? "" : "disabled"} data-tooltip="Criar uma nova unidade visual a partir do Handoff aprovado">Adicionar unidade</button>
         ${handoffApproved ? "" : `<span class="units-locked">Aprove o Handoff Visual para liberar a conversa visual.</span>`}
       </div>
       ${cards || `<p class="empty-state small">Nenhuma unidade visual ainda.</p>`}
@@ -817,11 +836,6 @@ function renderDetail() {
 
   copyTargets = [];
   const answersEntries = Object.entries(b.answers || {});
-  const answersText = answersEntries.map(([q, a]) => `${q}\n${a}`).join("\n\n");
-  const answersHtml = `<div class="answers-grid">${answersEntries.map(([q, a]) =>
-    `<div class="qa"><strong>${escapeHtml(q)}</strong><span>${escapeHtml(a)}</span></div>`).join("")}</div>`;
-  const answersCollapsed = collapsedAnswers.has(b.id);
-  copyTargets.push(answersText); // index 0
 
   const estrategicas = PIPELINE.filter(s => s.conversa === "estrategica" || s.conversa === "transicao");
   const visuais = PIPELINE.filter(s => s.conversa === "visual");
@@ -834,28 +848,32 @@ function renderDetail() {
         <p class="detail-meta"><span class="status-badge status-${b.status}">${STATUS_LABELS[b.status] || b.status}</span></p>
       </div>
       <div class="detail-toolbar">
-        <button class="ghost-button" id="editNameButton" type="button">Editar</button>
-        <button class="ghost-button" id="libraryButton" type="button">Biblioteca Estratégica</button>
-        <button class="ghost-button" id="copyDossieButton" type="button">Copiar dossiê</button>
-        <button class="ghost-button" id="exportDossieButton" type="button">Baixar dossiê .md</button>
-        <button class="ghost-button" id="exportPdfButton" type="button">PDF</button>
-        <button class="ghost-button" id="finalizarButton" type="button">Finalizar dossiê</button>
+        <button class="ghost-button" id="editNameButton" type="button" data-tooltip="Renomear este briefing">Editar</button>
+        <button class="ghost-button" id="libraryButton" type="button" data-tooltip="Ver e editar as ferramentas estratégicas usadas na etapa 3">Biblioteca Estratégica</button>
+        <button class="ghost-button" id="copyDossieButton" type="button" data-tooltip="Copiar todo o histórico aprovado em Markdown">Copiar dossiê</button>
+        <button class="ghost-button" id="exportDossieButton" type="button" data-tooltip="Baixar o dossiê completo como arquivo .md">Baixar dossiê .md</button>
+        <button class="ghost-button" id="exportPdfButton" type="button" data-tooltip="Gerar um PDF do dossiê para imprimir ou enviar">PDF</button>
+        <button class="ghost-button" id="finalizarButton" type="button" data-tooltip="Marcar este briefing como concluído (status Pronto)">Finalizar dossiê</button>
       </div>
     </div>
 
-    <div class="detail-section">
-      <div class="detail-section-head">
-        <button class="detail-section-head-left" id="toggleAnswersButton" type="button">
-          <span class="section-toggle-icon${answersCollapsed ? " collapsed" : ""}">${ICON_CHEVRON}</span>
-          <h3>Respostas do briefing</h3>
-        </button>
-        <button class="copy-button" type="button" data-copy-index="0">Copiar</button>
-      </div>
-      ${answersCollapsed ? "" : answersHtml}
-    </div>
+    <button class="answers-summary" id="openAnswersButton" type="button" data-tooltip="Ver todas as respostas do formulário">
+      <span class="answers-summary-text">
+        <h3>Respostas do briefing</h3>
+        <span class="answers-summary-count">${answersEntries.length} pergunta${answersEntries.length === 1 ? "" : "s"} respondida${answersEntries.length === 1 ? "" : "s"}</span>
+      </span>
+      <span class="answers-summary-icon">${ICON_CHEVRON}</span>
+    </button>
 
     <div class="pipeline-group">
       <h3 class="pipeline-group-title">${CONVERSAS.estrategica} <span>estratégia → verbal → direção visual escrita, sem imagem</span></h3>
+      <div class="step-card static state-aprovado" data-tooltip="O formulário público já foi enviado e salvo. As etapas abaixo continuam esse processamento.">
+        <div class="step-head static">
+          <span class="step-num">1</span>
+          <span class="step-title">Recebimento do briefing</span>
+          <span class="step-state-badge state-aprovado">Recebido</span>
+        </div>
+      </div>
       ${estrategicas.map(s => stepCard(b, s)).join("")}
     </div>
 
@@ -875,10 +893,7 @@ function renderDetail() {
   $("exportDossieButton").addEventListener("click", exportDossieMd);
   $("exportPdfButton").addEventListener("click", exportPdf);
   $("finalizarButton").addEventListener("click", finalizarDossie);
-  $("toggleAnswersButton").addEventListener("click", () => {
-    if (collapsedAnswers.has(b.id)) collapsedAnswers.delete(b.id); else collapsedAnswers.add(b.id);
-    renderDetail();
-  });
+  $("openAnswersButton").addEventListener("click", () => openAnswersModal(b));
 
   // --- copiar (prompts, respostas) ---
   detail.querySelectorAll("[data-copy-index]").forEach(btn =>
@@ -1057,3 +1072,6 @@ $("libraryCopyButton").addEventListener("click", () => copyText($("libraryTextar
 $("librarySaveButton").addEventListener("click", saveLibraryEdit);
 $("libraryResetButton").addEventListener("click", resetLibrary);
 $("libraryModal").addEventListener("click", e => { if (e.target === $("libraryModal")) closeLibraryModal(); });
+$("answersModalCloseButton").addEventListener("click", closeAnswersModal);
+$("answersModalCopyButton").addEventListener("click", () => copyText(answersModalText, "Respostas"));
+$("answersModal").addEventListener("click", e => { if (e.target === $("answersModal")) closeAnswersModal(); });
