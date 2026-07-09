@@ -940,7 +940,7 @@ NEGATIVE: ${meta.block}
         <div class="unit-tools">
           <span class="unit-tools-label">Ferramenta que deu bom</span>
           <div class="unit-tools-row">
-            ${IMAGE_TOOLS.map(t => `<button class="tool-chip ${u.imageTool === t.id ? "on" : ""}" type="button" data-unit-tool="${t.id}" data-unit="${i}" data-tooltip="Marcar que a imagem boa veio do ${t.label}"><span class="tool-mono" style="background:${t.color}">${t.mono}</span>${t.label}</button>`).join("")}
+            ${IMAGE_TOOLS.map(t => `<button class="tool-chip ${u.imageTool === t.id ? "on" : ""}" type="button" style="--tool-color:${t.color}" data-unit-tool="${t.id}" data-unit="${i}" data-tooltip="Marcar que a imagem boa veio do ${t.label}">${t.label}</button>`).join("")}
           </div>
         </div>
         <label class="step-notes-label">Avaliação do resultado
