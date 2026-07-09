@@ -52,6 +52,26 @@
 
   <div id="printArea" class="print-area" aria-hidden="true"></div>
 
+  <div class="modal-overlay" id="libraryModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <p class="eyebrow">Repertório estratégico</p>
+          <h2>Biblioteca Estratégica</h2>
+          <p class="modal-meta" id="libraryMeta"></p>
+        </div>
+        <button class="text-button" id="libraryCloseButton" type="button">Fechar</button>
+      </div>
+      <p class="modal-hint">A IA escolhe a ferramenta desta biblioteca na etapa 3. Edite ou substitua o conteúdo aqui — as alterações ficam salvas neste navegador. Use "Copiar" para colar no chat.</p>
+      <textarea id="libraryTextarea" rows="16" spellcheck="false"></textarea>
+      <div class="modal-actions">
+        <button class="ghost-button" id="libraryCopyButton" type="button">Copiar biblioteca</button>
+        <button class="ghost-button" id="librarySaveButton" type="button">Salvar edição</button>
+        <button class="text-button" id="libraryResetButton" type="button">Restaurar padrão</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast" role="status"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

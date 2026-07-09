@@ -4,118 +4,459 @@ let briefings = [];
 let activeId = null;
 let channel;
 let copyTargets = [];
+let libraryMarkdown = "";      // Biblioteca Estratégica em Markdown, pronta pra colar
+let libraryMeta = { count: 0, version: "—" };
 const collapsedAnswers = new Set();
+const openSteps = new Set();    // etapas expandidas no painel (por stepKey)
 
 const ICON_EDIT = `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 3.5l3 3L6 17H3v-3L13.5 3.5z"/></svg>`;
 const ICON_DELETE = `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h12M8 6V4h4v2M6 6l1 10h6l1-10"/></svg>`;
 const ICON_CHEVRON = `<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4.5L6 8l3.5-3.5"/></svg>`;
 
-const RESULT_SECTIONS = [
-  ["modeloEscolhido", "Modelo mental escolhido"],
-  ["caminhos", "Caminhos gerados"],
-  ["autocritica", "Autocrítica"],
-  ["caminhoFinal", "Caminho final"],
-  ["persona", "Persona de redação"],
-  ["referenciasVisuais", "Referências visuais"],
-  ["promptImagem", "Prompt de imagem"],
+// ---------------------------------------------------------------------------
+// Estados de aprovação por etapa (documento, seção 4.6)
+// ---------------------------------------------------------------------------
+const STEP_STATES = {
+  pendente:    { label: "Pendente",     hint: "Ainda não começou" },
+  em_execucao: { label: "Em execução",  hint: "Prompt copiado ou em andamento" },
+  rascunho:    { label: "Rascunho",     hint: "Resposta colada, não aprovada" },
+  aprovado:    { label: "Aprovado",     hint: "Pode alimentar a próxima etapa" },
+  revisar:     { label: "Revisar",      hint: "Precisa de ajuste antes de avançar" },
+  rejeitado:   { label: "Rejeitado",    hint: "Não deve ser usado" },
+  pulada:      { label: "Pulada",       hint: "Etapa omitida com justificativa" },
+  erro:        { label: "Erro",         hint: "Falha ou saída inutilizável" },
+};
+
+const CONVERSAS = {
+  estrategica: "Conversa Estratégica",
+  transicao:   "Transição",
+  visual:      "Conversa Visual",
+  painel:      "Painel",
+};
+
+// ---------------------------------------------------------------------------
+// PIPELINE — 16 etapas como artefatos aprováveis (documento, seções 2 e 3)
+// Cada etapa gera um prompt de 5 blocos (Papel, Tarefa, Contexto, Critérios,
+// Saída — seção 4.1). `inputs` define o CONTEXTO ENXUTO: só os artefatos
+// aprovados necessários entram, nunca o briefing bruto repetido (regra 4.8).
+// ---------------------------------------------------------------------------
+const PIPELINE = [
+  {
+    key: "briefMestre", num: 2, conversa: "estrategica",
+    title: "Brief Mestre",
+    objetivo: "Normalizar o briefing bruto numa cápsula-base curta e confiável.",
+    papel: "Você organiza briefings de marca sem criar estratégia ainda.",
+    tarefa: "Transforme o briefing bruto abaixo em um Brief Mestre limpo, separando fato, inferência e dúvida.",
+    inputs: ["briefingBruto"],
+    criterios: [
+      "Separe fatos confirmados, inferências úteis e lacunas de informação.",
+      "Não invente dado nem resolva o projeto visualmente.",
+      "Linguagem limpa, leitura rápida.",
+      "Sirva como fonte principal das próximas etapas.",
+    ],
+    formato: `# Brief Mestre
+
+## Marca / projeto
+## Situação do projeto
+## O que precisa nascer ou mudar
+## Público principal
+## Público secundário
+## Problema real percebido
+## Objetivo da identidade
+## Aplicações prioritárias
+## Sinais desejados
+## Sinais proibidos
+## Referências citadas
+## Restrições práticas
+## Fatos confirmados
+## Inferências úteis
+## Lacunas de informação
+## Critérios iniciais de aprovação`,
+  },
+  {
+    key: "ferramenta", num: 3, conversa: "estrategica",
+    title: "Seleção da ferramenta estratégica",
+    objetivo: "Escolher a ferramenta mais útil da Biblioteca Estratégica para o caso.",
+    papel: "Você atua como estrategista de marca e escolhe a ferramenta de análise mais útil para este projeto.",
+    tarefa: "Analise o Brief Mestre e a Biblioteca Estratégica. Escolha uma ferramenta principal e, se necessário, até duas auxiliares.",
+    inputs: ["briefMestre"],
+    needsLibrary: true,
+    criterios: [
+      "Não escolha por familiaridade; escolha por aderência ao problema real.",
+      "Use a biblioteca como repertório, não como lista obrigatória.",
+      "Cite o nome exato da ferramenta como está na biblioteca.",
+      "Explique por que outras opções fortes foram descartadas.",
+      "Marque qualquer incerteza.",
+    ],
+    formato: `# Ferramenta Estratégica Escolhida
+
+## Ferramenta principal
+## Por que esta ferramenta serve para o caso
+## O que ela ajuda a revelar
+## Ferramentas auxiliares, se houver
+## Ferramentas fortes descartadas
+## Risco de usar a ferramenta errada
+## Como esta escolha orienta as próximas etapas`,
+  },
+  {
+    key: "pesquisa", num: 4, conversa: "estrategica",
+    title: "Pesquisa contextual",
+    objetivo: "Acrescentar contexto externo útil sem virar volume morto.",
+    papel: "Você é um pesquisador de categoria e cultura de marca.",
+    tarefa: "Organize repertório sobre categoria, concorrência, códigos, riscos e oportunidades para este projeto.",
+    inputs: ["briefMestre", "ferramenta"],
+    criterios: [
+      "A pesquisa muda ou confirma alguma decisão.",
+      "Diferencie fato, inferência e opinião.",
+      "Não vire moodboard genérico.",
+      "Registre fonte e data quando houver dado externo.",
+      "Aponte riscos práticos para estratégia e criação.",
+    ],
+    formato: `# Pesquisa Contextual
+
+## Categoria e contexto
+## Códigos comuns da categoria
+## Códigos saturados ou perigosos
+## Oportunidades de diferenciação
+## Referências úteis e como usar
+## Referências perigosas e por que evitar
+## Hipóteses para testar na estratégia
+## Fontes consultadas
+## Incertezas`,
+  },
+  {
+    key: "diagnostico", num: 5, conversa: "estrategica",
+    title: "Diagnóstico estratégico",
+    objetivo: "Identificar o problema de marca que a identidade precisa resolver.",
+    papel: "Você é um estrategista que usa a ferramenta escolhida para diagnosticar a marca.",
+    tarefa: "Formule o diagnóstico estratégico: job central, tensão, oportunidade e critério de reprovação.",
+    inputs: ["briefMestre", "ferramenta", "pesquisa"],
+    criterios: [
+      "Explique por que a marca precisa de identidade.",
+      "Não repita o briefing; revele uma tensão clara.",
+      "Oriente decisão.",
+      "Permita reprovar soluções bonitas mas estrategicamente erradas.",
+    ],
+    formato: `# Diagnóstico Estratégico
+
+## Problema real
+## Job central da marca
+## Tensão principal
+## Oportunidade estratégica
+## Percepção desejada
+## Percepção proibida
+## Papel da identidade visual
+## Critério de reprovação`,
+  },
+  {
+    key: "caminhos", num: 6, conversa: "estrategica",
+    title: "Caminhos estratégicos",
+    objetivo: "Explorar rotas possíveis antes de escolher a direção final.",
+    papel: "Você é um estrategista criativo que abre rotas distintas.",
+    tarefa: "Proponha de 3 a 5 caminhos estratégicos realmente diferentes, cada um comparável.",
+    inputs: ["diagnostico", "briefMestre", "ferramenta", "pesquisa"],
+    criterios: [
+      "Os caminhos são realmente diferentes, não variações estéticas.",
+      "Cada um tem consequência verbal e visual.",
+      "Os riscos estão claros.",
+      "Há base para decisão humana.",
+    ],
+    formato: `# Caminhos Estratégicos
+
+## Caminho 1: Nome
+### Tese
+### Promessa
+### Provas possíveis
+### Tom verbal
+### Potencial visual
+### Risco
+### Quando escolher este caminho
+
+(repita o bloco para cada caminho, de 3 a 5 no total)`,
+  },
+  {
+    key: "autocritica", num: 7, conversa: "estrategica",
+    title: "Autocrítica e decisão",
+    objetivo: "Avaliar os caminhos, evitar escolha fraca e definir a direção final.",
+    papel: "Você é um crítico exigente que evita escolhas fracas.",
+    tarefa: "Critique cada caminho com rigor e recomende um caminho ou combinação, com renúncia clara.",
+    inputs: ["caminhos", "diagnostico", "briefMestre", "pesquisa"],
+    criterios: [
+      "A decisão tem renúncia clara; não escolhe tudo ao mesmo tempo.",
+      "Explica por que o caminho vence.",
+      "Aponta risco de execução, clichê e desalinhamento.",
+      "Registra o que não deve voltar nas próximas etapas.",
+    ],
+    formato: `# Autocrítica e Decisão
+
+## Avaliação dos caminhos
+## Caminho recomendado
+## Por que ele vence
+## O que deve ser ajustado
+## O que foi descartado
+## Riscos que permanecem
+## Decisão final aprovada`,
+  },
+  {
+    key: "memo", num: 8, conversa: "estrategica",
+    title: "Memo de Decisão",
+    objetivo: "Consolidar a direção escolhida num documento pequeno e acionável.",
+    papel: "Você consolida decisões estratégicas em documentos estáveis.",
+    tarefa: "Transforme o caminho escolhido em um Memo de Decisão com tese, promessa, provas e não-caminhos.",
+    inputs: ["autocritica", "diagnostico", "briefMestre", "pesquisa"],
+    criterios: [
+      "Substitui o briefing bruto como referência de decisão.",
+      "Tem tese clara e registra renúncias.",
+      "Curto o bastante para usar em prompts seguintes.",
+      "Não abre novas rotas desnecessárias.",
+    ],
+    formato: `# Memo de Decisão
+
+## Tese estratégica
+## Promessa central
+## Provas que sustentam a promessa
+## O que a marca precisa fazer sentir
+## O que a marca não pode parecer
+## Território verbal
+## Território visual inicial
+## Não-caminhos
+## Riscos de execução
+## Critério final de aprovação estratégica`,
+  },
+  {
+    key: "sistemaVerbal", num: 9, conversa: "estrategica",
+    title: "Sistema Verbal",
+    objetivo: "Definir como a marca fala e escreve antes da criação visual.",
+    papel: "Você é um redator-diretor que define voz de marca.",
+    tarefa: "Crie um guia verbal prático com tom, vocabulário, ritmo, exemplos e anti-exemplos.",
+    inputs: ["memo", "briefMestre"],
+    criterios: [
+      "Permite escrever textos reais e evita vícios de IA.",
+      "Mantém a estratégia reconhecível.",
+      "Não vira manifesto abstrato.",
+      "Tem exemplos para naming, textos curtos e microcopy.",
+    ],
+    formato: `# Sistema Verbal
+
+## Persona de redação
+## Tom de voz
+## Ritmo de frase
+## Vocabulário preferido
+## Vocabulário a evitar
+## Estruturas de frase recomendadas
+## Frases exemplo
+## Anti-exemplos
+## Checklist de revisão textual`,
+  },
+  {
+    key: "criteriosCriativos", num: 10, conversa: "estrategica",
+    title: "Critérios Criativos",
+    objetivo: "Criar a ponte objetiva entre estratégia, texto e design.",
+    papel: "Você traduz estratégia em critérios objetivos de criação.",
+    tarefa: "Defina critérios criativos: sinais permitidos/proibidos, contraste, densidade, maturidade e régua de aprovação.",
+    inputs: ["memo", "sistemaVerbal", "pesquisa"],
+    criterios: [
+      "Não gera logo, cor ou mockup; define como julgá-los.",
+      "Reduz subjetividade.",
+      "Cria uma régua de aprovação visual e verbal.",
+    ],
+    formato: `# Critérios Criativos
+
+## Função da identidade
+## Princípios de criação
+## Sinais visuais permitidos
+## Sinais visuais proibidos
+## Sinais verbais permitidos
+## Sinais verbais proibidos
+## Aplicações que precisam funcionar primeiro
+## Régua de aprovação
+## Riscos criativos`,
+  },
+  {
+    key: "sistemaVisual", num: 11, conversa: "estrategica",
+    title: "Sistema Visual Direcional",
+    objetivo: "Definir a direção visual escrita antes de gerar qualquer imagem.",
+    papel: "Você é um diretor de arte que descreve a direção visual em texto.",
+    tarefa: "Organize a direção visual em blocos separados (forma, tipografia, cor, composição, grafismo, etc.).",
+    inputs: ["criteriosCriativos", "memo", "sistemaVerbal", "pesquisa"],
+    criterios: [
+      "Específico sem virar prompt gigante.",
+      "Não depende de mockup para parecer bom.",
+      "Separa unidades visuais e explica como cada uma sustenta a estratégia.",
+      "Prepara a conversa visual.",
+    ],
+    formato: `# Sistema Visual Direcional
+
+## Princípio visual central
+## Linguagem de forma
+## Tipografia
+## Cor
+## Materialidade e textura
+## Composição e respiro
+## Grafismos e símbolos
+## Fotografia ou ilustração
+## Aplicações prioritárias
+## O que evitar
+## Critérios para prompts visuais`,
+  },
+  {
+    key: "handoff", num: 12, conversa: "transicao",
+    title: "Handoff Visual",
+    objetivo: "Criar o pacote enxuto que vai para a conversa visual.",
+    papel: "Você condensa decisões aprovadas em uma ficha de contexto enxuta.",
+    tarefa: "Condense os artefatos aprovados em um Handoff Visual, removendo ruído e informação não decidida.",
+    inputs: ["briefMestre", "memo", "sistemaVerbal", "criteriosCriativos", "sistemaVisual"],
+    criterios: [
+      "Permite começar a conversa visual sem o briefing bruto.",
+      "Contém apenas decisões aprovadas.",
+      "Tamanho gerenciável.",
+      "Deixa claro que as próximas etapas são unitárias.",
+    ],
+    formato: `# Handoff Visual
+
+Use este conteúdo como contexto aprovado. Não volte ao briefing bruto.
+
+## Marca / projeto
+## Tese estratégica aprovada
+## Promessa central
+## Público e percepção desejada
+## O que não pode parecer
+## Tom verbal aprovado
+## Critérios criativos
+## Direção visual aprovada
+## Aplicações prioritárias
+
+## Regras para geração visual
+- Gerar uma unidade por vez.
+- Não misturar logo, mockup, fotografia e aplicação no mesmo prompt.
+- Começar pelo positivo e usar NEGATIVE apenas como guarda-corpo.`,
+  },
+  // Etapa 13 (Exploração Visual Unitária) é tratada num bloco próprio (unidades).
+  {
+    key: "convergencia", num: 14, conversa: "visual",
+    title: "Convergência do Sistema",
+    objetivo: "Unir as unidades visuais aprovadas em uma identidade coerente.",
+    papel: "Você é um diretor de arte que unifica um sistema visual.",
+    tarefa: "Compare as unidades aprovadas, resolva conflitos e proponha hierarquia de uso.",
+    inputs: ["handoff", "visualUnitsResumo"],
+    criterios: [
+      "O resultado parece uma marca, não uma coleção de imagens boas.",
+      "As unidades se reforçam e há hierarquia.",
+      "Conflitos estão resolvidos ou marcados.",
+      "O sistema pode virar apresentação, manual ou refinamento.",
+    ],
+    formato: `# Convergência do Sistema
+
+## Princípio unificador
+## Elementos aprovados
+## Como os elementos se combinam
+## Hierarquia de uso
+## Conflitos encontrados
+## Ajustes necessários
+## Aplicações prioritárias para teste
+## Pendências antes da apresentação`,
+  },
 ];
 
-// Mesmo pipeline da edge function (supabase/functions/process-briefing), só que
-// aqui vira uma sequência de prompts pra colar manualmente num GPT qualquer,
-// sem depender de cota de API.
-const MODELOS_MENTAIS = `
-- Jobs to be Done: o que o cliente está "contratando" o produto/serviço para fazer
-- Primeiros princípios: quebrar o problema em verdades básicas e reconstruir dali
-- Golden Circle (Simon Sinek): por quê -> como -> o quê
-- Blue Ocean Strategy: onde criar espaço de mercado não disputado
-- Behavioral design / gatilhos comportamentais: o que motiva a ação do público
-`.trim();
+const STEP_BY_KEY = Object.fromEntries(PIPELINE.map(s => [s.key, s]));
 
-const VICIOS_IA = `
-- Evite frases de efeito genéricas ("no mundo dinâmico de hoje...")
-- Evite excesso de adjetivos vazios (incrível, revolucionário, único)
-- Evite listas artificiais quando um parágrafo corrido é mais natural
-- Prefira afirmações concretas e específicas a generalidades
-- Evite repetir a pergunta do usuário como abertura da resposta
-`.trim();
+// Unidades visuais recomendadas (documento, etapa 13)
+const VISUAL_UNITS = {
+  logo:        { label: "Logo",        ask: "Apenas logo, símbolo ou wordmark em fundo limpo", block: "mockup, embalagem, fachada, objeto, fotografia" },
+  tipografia:  { label: "Tipografia",  ask: "Hierarquia tipográfica e exemplos de texto",       block: "mockup, cena, embalagem realista" },
+  paleta:      { label: "Paleta",      ask: "Campos de cor, proporção e combinações",           block: "produto final, cena decorativa, excesso de textura" },
+  grafismos:   { label: "Grafismos",   ask: "Sistema de linhas, marcas, selos, padrões e ícones", block: "ilustração dominante, mascote, ornamentação excessiva" },
+  fotografia:  { label: "Fotografia",  ask: "Direção fotográfica ou moodboard de linguagem",     block: "logo, layout, composição publicitária final" },
+  ilustracao:  { label: "Ilustração",  ask: "Estilo ilustrativo e linguagem de traço",          block: "mascote involuntário, excesso narrativo" },
+  aplicacao:   { label: "Aplicação",   ask: "Um tipo de aplicação por vez",                     block: "sistema completo em uma tacada" },
+  refinamento: { label: "Refinamento", ask: "Ajuste fino de uma unidade já aprovada",           block: "reabrir escopo já decidido" },
+};
 
-function formatBriefingText(answers) {
-  return Object.entries(answers || {}).map(([q, a]) => `P: ${q}\nR: ${a}`).join("\n\n");
-}
-
-const MANUAL_STEPS = [
-  {
-    key: "modeloEscolhido", title: "1. Modelo mental escolhido",
-    build: ctx => ({
-      system: `Você analisa briefings de projeto e escolhe, entre os modelos mentais abaixo, o que melhor se aplica ao caso. Responda com o nome do modelo escolhido e 2-3 frases explicando por quê.\n\nModelos mentais disponíveis:\n${MODELOS_MENTAIS}`,
-      user: ctx.briefingText,
-    }),
-  },
-  {
-    key: "caminhos", title: "2. Caminhos estratégicos",
-    build: ctx => ({
-      system: "Você é um estrategista de projeto. A partir do briefing e do modelo mental escolhido, gere de 3 a 5 caminhos estratégicos distintos e viáveis. Para cada caminho, dê um nome curto e 2-3 frases de justificativa.",
-      user: `Briefing:\n${ctx.briefingText}\n\nModelo mental escolhido:\n${ctx.modeloEscolhido}`,
-    }),
-  },
-  {
-    key: "autocritica", title: "3. Autocrítica dos caminhos",
-    build: ctx => ({
-      system: "Você é um crítico exigente. Avalie os caminhos estratégicos abaixo: aponte fraquezas, riscos e sobreposições. Diga quais caminhos são fracos e por quê.",
-      user: ctx.caminhos,
-    }),
-  },
-  {
-    key: "caminhoFinal", title: "4. Caminho final refinado",
-    build: ctx => ({
-      system: "Com base nos caminhos propostos e na autocrítica recebida, escolha o melhor caminho (ou combine elementos de mais de um) e descreva-o de forma refinada e acionável, em um parágrafo.",
-      user: `Caminhos:\n${ctx.caminhos}\n\nAutocrítica:\n${ctx.autocritica}`,
-    }),
-  },
-  {
-    key: "persona", title: "5. Persona de redação",
-    build: ctx => ({
-      system: `Crie uma persona de redator(a): tom de voz, vocabulário típico e o que evitar, para escrever os textos deste projeto. Baseie-se no caminho estratégico escolhido. Siga rigorosamente estas regras de estilo (vícios de linguagem de IA a evitar):\n${VICIOS_IA}`,
-      user: ctx.caminhoFinal,
-    }),
-  },
-  {
-    key: "referenciasVisuais", title: "6. Referências visuais",
-    build: ctx => ({
-      system: "Você é um diretor de arte. A partir do briefing e do caminho estratégico escolhido, proponha referências visuais (estilos, paletas, texturas, exemplos de mercado) e explique como a equipe de design poderia usar essas referências.",
-      user: `Briefing:\n${ctx.briefingText}\n\nCaminho estratégico:\n${ctx.caminhoFinal}`,
-    }),
-  },
-  {
-    key: "promptImagem", title: "7. Prompt de imagem",
-    build: ctx => ({
-      system: "Escreva um prompt pronto para gerar uma imagem em uma ferramenta de IA (ex: Midjourney, DALL-E, Nano Banana), em inglês, detalhado e específico, com base nas referências visuais abaixo. Também escreva 1-2 frases em português explicando a intenção da imagem.",
-      user: ctx.referenciasVisuais,
-    }),
-  },
-];
-
-function manualDraftKey(id) { return `manualDraft:${id}`; }
-function loadManualDraft(id) {
-  try { return JSON.parse(localStorage.getItem(manualDraftKey(id))) || {}; } catch { return {}; }
-}
-function saveManualDraft(id, draft) { localStorage.setItem(manualDraftKey(id), JSON.stringify(draft)); }
-function clearManualDraft(id) { localStorage.removeItem(manualDraftKey(id)); }
-
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, c => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
   }[c]));
 }
-
 function nl2br(value) { return escapeHtml(value).replace(/\n/g, "<br>"); }
-
 function slugify(value) {
   return String(value || "briefing")
     .normalize("NFD").replace(/[̀-ͯ]/g, "")
     .toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
+function formatBriefingText(answers) {
+  return Object.entries(answers || {}).map(([q, a]) => `P: ${q}\nR: ${a}`).join("\n\n");
+}
+function nowIso() { return new Date().toISOString(); }
 
+// --- Pipeline data (armazenado em briefings.result) -------------------------
+function getPipeline(b) {
+  const r = b && b.result;
+  if (r && r.version === 2 && r.steps) return r;
+  return { version: 2, steps: {}, visualUnits: [] };
+}
+function getStep(b, key) {
+  const p = getPipeline(b);
+  return p.steps[key] || { status: "pendente", response: "", notes: "" };
+}
+
+async function savePipeline(b, pipeline) {
+  const anyStarted = Object.values(pipeline.steps).some(s => s.status && s.status !== "pendente");
+  const dossieDone = pipeline.dossieFinalizado === true;
+  const status = dossieDone ? "pronto" : (anyStarted ? "processando" : "recebido");
+  const { error } = await client.from("briefings")
+    .update({ result: pipeline, status }).eq("id", b.id);
+  if (error) { toast("Erro ao salvar"); return false; }
+  return true;
+}
+
+// --- Construção do contexto e do prompt de 5 blocos -------------------------
+function inputLabel(key, b) {
+  if (key === "briefingBruto") return "Briefing bruto";
+  if (key === "visualUnitsResumo") return "Unidades visuais aprovadas";
+  const s = STEP_BY_KEY[key];
+  return s ? s.title : key;
+}
+function inputContent(key, b) {
+  if (key === "briefingBruto") return formatBriefingText(b.answers);
+  if (key === "visualUnitsResumo") {
+    const p = getPipeline(b);
+    const approved = (p.visualUnits || []).filter(u => u.status === "aprovado");
+    if (!approved.length) return "[⚠ nenhuma unidade visual aprovada ainda]";
+    return approved.map(u => {
+      const meta = VISUAL_UNITS[u.unitType] || { label: u.unitType };
+      return `## ${meta.label}\nPrompt: ${u.promptClean || "—"}\nNEGATIVE: ${u.negative || "—"}\nAvaliação: ${u.notes || "—"}`;
+    }).join("\n\n");
+  }
+  const st = getStep(b, key);
+  if (st.status === "aprovado" && st.response) return st.response;
+  if (st.response) return `[⚠ ainda não aprovado]\n${st.response}`;
+  return `[⚠ ${STEP_BY_KEY[key] ? STEP_BY_KEY[key].title : key} ainda não aprovado]`;
+}
+
+function buildPrompt(step, b) {
+  const blocks = [];
+  blocks.push(`Papel: ${step.papel}`);
+  blocks.push(`Tarefa: ${step.tarefa}`);
+
+  const contextParts = (step.inputs || []).map(k => `## ${inputLabel(k, b)}\n${inputContent(k, b)}`);
+  if (step.needsLibrary) {
+    contextParts.push(`## Biblioteca Estratégica (${libraryMeta.count} ferramentas)\n${libraryMarkdown || "[⚠ biblioteca não carregada]"}`);
+  }
+  blocks.push(`Contexto:\n${contextParts.join("\n\n")}`);
+
+  const crit = step.criterios.map((c, i) => `${i + 1}. ${c}`).join("\n");
+  blocks.push(`Critérios:\n${crit}`);
+
+  blocks.push(`Saída: entregue exatamente no formato abaixo:\n${step.formato}`);
+  return blocks.join("\n\n");
+}
+
+// ---------------------------------------------------------------------------
+// Supabase / auth
+// ---------------------------------------------------------------------------
 function getClient() {
   if (client) return client;
   if (!window.SUPABASE_URL || window.SUPABASE_URL.includes("SEU-PROJETO")) {
@@ -125,7 +466,6 @@ function getClient() {
   client = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
   return client;
 }
-
 async function login() {
   const supabase = getClient();
   if (!supabase) return;
@@ -137,40 +477,105 @@ async function login() {
   if (error) { $("loginError").textContent = "E-mail ou senha inválidos."; return; }
   showHub();
 }
-
 async function logout() {
   await client.auth.signOut();
   location.reload();
 }
 
-const STATUS_LABELS = { recebido: "Recebido", processando: "Processando", pronto: "Pronto", erro: "Erro" };
+// ---------------------------------------------------------------------------
+// Biblioteca Estratégica (data/modelos-mentais.json → Markdown)
+// ---------------------------------------------------------------------------
+const LIBRARY_OVERRIDE_KEY = "strategicLibraryOverride";
+async function loadLibrary() {
+  const override = localStorage.getItem(LIBRARY_OVERRIDE_KEY);
+  if (override) {
+    libraryMarkdown = override;
+    libraryMeta = { count: (override.match(/^- /gm) || []).length, version: "editada localmente" };
+    return;
+  }
+  try {
+    const res = await fetch("data/modelos-mentais.json");
+    const data = await res.json();
+    const byCat = {};
+    data.forEach(m => { (byCat[m.categoria] = byCat[m.categoria] || []).push(m); });
+    const lines = [`# Biblioteca Estratégica (${data.length} ferramentas)`, ""];
+    Object.entries(byCat).forEach(([cat, items]) => {
+      lines.push(`## ${cat}`);
+      items.forEach(m => lines.push(`- **${m.nome}**${m.autor ? ` (${m.autor})` : ""}: ${m.descricao}`));
+      lines.push("");
+    });
+    libraryMarkdown = lines.join("\n").trim();
+    libraryMeta = { count: data.length, version: "padrão do repositório" };
+  } catch {
+    libraryMarkdown = "";
+    libraryMeta = { count: 0, version: "não carregada" };
+  }
+}
+function openLibraryModal() {
+  const overlay = $("libraryModal");
+  $("libraryMeta").textContent = `${libraryMeta.count} ferramentas · versão: ${libraryMeta.version}`;
+  $("libraryTextarea").value = libraryMarkdown;
+  overlay.classList.add("open");
+}
+function closeLibraryModal() { $("libraryModal").classList.remove("open"); }
+function saveLibraryEdit() {
+  const val = $("libraryTextarea").value.trim();
+  localStorage.setItem(LIBRARY_OVERRIDE_KEY, val);
+  libraryMarkdown = val;
+  libraryMeta = { count: (val.match(/^- /gm) || []).length, version: "editada localmente" };
+  $("libraryMeta").textContent = `${libraryMeta.count} ferramentas · versão: ${libraryMeta.version}`;
+  toast("Biblioteca salva");
+}
+async function resetLibrary() {
+  localStorage.removeItem(LIBRARY_OVERRIDE_KEY);
+  await loadLibrary();
+  $("libraryTextarea").value = libraryMarkdown;
+  $("libraryMeta").textContent = `${libraryMeta.count} ferramentas · versão: ${libraryMeta.version}`;
+  toast("Biblioteca restaurada");
+}
+
+// ---------------------------------------------------------------------------
+// Lista de briefings
+// ---------------------------------------------------------------------------
+const STATUS_LABELS = { recebido: "Recebido", processando: "Em andamento", pronto: "Pronto", erro: "Erro" };
+
+function pipelineProgress(b) {
+  const p = getPipeline(b);
+  const total = PIPELINE.length;
+  const done = PIPELINE.filter(s => (p.steps[s.key] || {}).status === "aprovado").length;
+  return { done, total };
+}
 
 function renderList() {
-  $("briefingList").innerHTML = briefings.map(b => `
+  $("briefingList").innerHTML = briefings.map(b => {
+    const pr = pipelineProgress(b);
+    return `
     <div class="briefing-item-wrap">
       <button class="briefing-item ${b.id === activeId ? "active" : ""}" data-id="${b.id}">
         <small>${new Date(b.created_at).toLocaleString("pt-BR")}</small>
         <strong>${escapeHtml(b.client_name || "Briefing sem nome")}</strong>
-        <span class="status-badge status-${b.status}">${STATUS_LABELS[b.status] || b.status}</span>
+        <span class="status-row">
+          <span class="status-badge status-${b.status}">${STATUS_LABELS[b.status] || b.status}</span>
+          ${b.status !== "recebido" ? `<span class="progress-chip">${pr.done}/${pr.total}</span>` : ""}
+        </span>
       </button>
       <div class="item-actions">
         <button class="icon-button" type="button" data-edit-id="${b.id}" aria-label="Editar nome" title="Editar nome">${ICON_EDIT}</button>
         <button class="icon-button danger" type="button" data-delete-id="${b.id}" aria-label="Excluir" title="Excluir">${ICON_DELETE}</button>
       </div>
-    </div>
-  `).join("") || `<p class="empty-state">Nenhum briefing recebido ainda.</p>`;
+    </div>`;
+  }).join("") || `<p class="empty-state">Nenhum briefing recebido ainda.</p>`;
+
   document.querySelectorAll(".briefing-item").forEach(el => el.addEventListener("click", () => {
     activeId = el.dataset.id;
     renderList();
     renderDetail();
   }));
   document.querySelectorAll("[data-edit-id]").forEach(btn => btn.addEventListener("click", e => {
-    e.stopPropagation();
-    renameBriefing(btn.dataset.editId);
+    e.stopPropagation(); renameBriefing(btn.dataset.editId);
   }));
   document.querySelectorAll("[data-delete-id]").forEach(btn => btn.addEventListener("click", e => {
-    e.stopPropagation();
-    deleteBriefing(btn.dataset.deleteId);
+    e.stopPropagation(); deleteBriefing(btn.dataset.deleteId);
   }));
 }
 
@@ -179,107 +584,99 @@ async function renameBriefing(id) {
   if (!b) return;
   const next = window.prompt("Novo nome do briefing:", b.client_name || "");
   if (next === null) return;
-  const trimmed = next.trim();
-  const { error } = await client.from("briefings").update({ client_name: trimmed || null }).eq("id", id);
+  const { error } = await client.from("briefings").update({ client_name: next.trim() || null }).eq("id", id);
   if (error) { toast("Erro ao renomear"); return; }
   toast("Nome atualizado");
   await loadBriefings();
 }
-
 async function deleteBriefing(id) {
   const b = briefings.find(x => x.id === id);
   if (!b) return;
-  const ok = window.confirm(`Excluir o briefing "${b.client_name || "sem nome"}"? Essa ação não pode ser desfeita.`);
-  if (!ok) return;
+  if (!window.confirm(`Excluir o briefing "${b.client_name || "sem nome"}"? Essa ação não pode ser desfeita.`)) return;
   const { error } = await client.from("briefings").delete().eq("id", id);
   if (error) { toast("Erro ao excluir"); return; }
   if (activeId === id) activeId = null;
-  clearManualDraft(id);
   toast("Briefing excluído");
   await loadBriefings();
 }
 
-function buildMarkdown(b) {
-  const lines = [];
-  lines.push(`# Briefing: ${b.client_name || "Sem nome"}`);
-  lines.push(`_Recebido em ${new Date(b.created_at).toLocaleString("pt-BR")}, status: ${STATUS_LABELS[b.status] || b.status}_`);
-  lines.push("");
-  lines.push("## Respostas do briefing");
-  lines.push("");
-  Object.entries(b.answers || {}).forEach(([q, a]) => {
-    lines.push(`**${q}**`);
-    lines.push(String(a));
-    lines.push("");
-  });
-  if (b.status === "pronto" && b.result) {
-    RESULT_SECTIONS.forEach(([key, title]) => {
-      const content = b.result[key];
-      if (!content) return;
-      lines.push(`## ${title}`);
-      lines.push("");
-      lines.push(String(content));
-      lines.push("");
-    });
-  } else if (b.status === "erro") {
-    lines.push("## Erro no processamento");
-    lines.push("");
-    lines.push(String(b.error || ""));
-  }
-  return lines.join("\n").trim() + "\n";
+// ---------------------------------------------------------------------------
+// Copiar / exportar
+// ---------------------------------------------------------------------------
+async function copyText(text, label) {
+  try { await navigator.clipboard.writeText(text); toast(label ? `${label} copiado` : "Copiado"); }
+  catch { toast("Não foi possível copiar"); }
 }
-
 function downloadFile(filename, content, mime) {
   const blob = new Blob([content], { type: mime });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
   URL.revokeObjectURL(url);
 }
 
-async function copyText(text, label) {
-  try {
-    await navigator.clipboard.writeText(text);
-    toast(label ? `${label} copiado` : "Copiado");
-  } catch {
-    toast("Não foi possível copiar");
+// Dossiê Final (documento, etapa 15)
+function buildDossie(b) {
+  const p = getPipeline(b);
+  const lines = [];
+  lines.push(`# Dossiê Final — ${b.client_name || "Sem nome"}`);
+  lines.push(`_Recebido em ${new Date(b.created_at).toLocaleString("pt-BR")}_`);
+  lines.push("");
+  lines.push("## Respostas do briefing");
+  Object.entries(b.answers || {}).forEach(([q, a]) => { lines.push(`**${q}**`); lines.push(String(a)); lines.push(""); });
+  PIPELINE.forEach(s => {
+    const st = p.steps[s.key];
+    if (!st || !st.response) return;
+    lines.push(`## ${s.num}. ${s.title}  \n_status: ${(STEP_STATES[st.status] || {}).label || st.status}_`);
+    lines.push("");
+    lines.push(String(st.response));
+    if (st.notes) { lines.push(""); lines.push(`> Nota do operador: ${st.notes}`); }
+    lines.push("");
+  });
+  const units = p.visualUnits || [];
+  if (units.length) {
+    lines.push("## 13. Explorações Visuais Unitárias");
+    lines.push("");
+    units.forEach(u => {
+      const meta = VISUAL_UNITS[u.unitType] || { label: u.unitType };
+      lines.push(`### ${meta.label} — ${(STEP_STATES[u.status] || {}).label || u.status}`);
+      if (u.promptClean) { lines.push("```prompt"); lines.push(u.promptClean); lines.push("```"); }
+      if (u.negative) { lines.push("```prompt"); lines.push(`${u.promptClean || ""}`.trim()); lines.push(`NEGATIVE: ${u.negative}`); lines.push("```"); }
+      if (u.notes) lines.push(`Avaliação: ${u.notes}`);
+      lines.push("");
+    });
   }
+  return lines.join("\n").trim() + "\n";
 }
-
-function exportMarkdown() {
-  const b = briefings.find(x => x.id === activeId);
-  if (!b) return;
-  downloadFile(`briefing-${slugify(b.client_name) || b.id.slice(0, 8)}.md`, buildMarkdown(b), "text/markdown");
-  toast("Markdown exportado");
+function exportDossieMd() {
+  const b = briefings.find(x => x.id === activeId); if (!b) return;
+  downloadFile(`dossie-${slugify(b.client_name) || b.id.slice(0, 8)}.md`, buildDossie(b), "text/markdown");
+  toast("Dossiê exportado");
 }
-
-function copyMarkdown() {
-  const b = briefings.find(x => x.id === activeId);
-  if (!b) return;
-  copyText(buildMarkdown(b), "Markdown");
+function copyDossie() {
+  const b = briefings.find(x => x.id === activeId); if (!b) return;
+  copyText(buildDossie(b), "Dossiê");
+}
+async function finalizarDossie() {
+  const b = briefings.find(x => x.id === activeId); if (!b) return;
+  const p = getPipeline(b);
+  p.dossieFinalizado = true;
+  if (await savePipeline(b, p)) { toast("Dossiê finalizado"); await loadBriefings(); }
 }
 
 function buildPrintHtml(b) {
-  const answersHtml = Object.entries(b.answers || {}).map(([q, a]) => `
-    <div class="print-qa"><strong>${escapeHtml(q)}</strong><p>${nl2br(a)}</p></div>
-  `).join("");
-
-  let resultHtml = "";
-  if (b.status === "pronto" && b.result) {
-    resultHtml = RESULT_SECTIONS
-      .filter(([key]) => b.result[key])
-      .map(([key, title]) => `<div class="print-section"><h2>${title}</h2><p>${nl2br(b.result[key])}</p></div>`)
-      .join("");
-  }
-
+  const answersHtml = Object.entries(b.answers || {}).map(([q, a]) =>
+    `<div class="print-qa"><strong>${escapeHtml(q)}</strong><p>${nl2br(a)}</p></div>`).join("");
+  const p = getPipeline(b);
+  const stepsHtml = PIPELINE.filter(s => (p.steps[s.key] || {}).response)
+    .map(s => `<div class="print-section"><h2>${s.num}. ${s.title}</h2><p>${nl2br(p.steps[s.key].response)}</p></div>`)
+    .join("");
   return `
     <header class="print-header">
       <img src="logo-dispo.svg" alt="Dispo">
       <div>
-        <p class="print-eyebrow">Briefing de marca</p>
+        <p class="print-eyebrow">Dossiê de marca</p>
         <h1>${escapeHtml(b.client_name || "Sem nome")}</h1>
         <p class="print-meta">${new Date(b.created_at).toLocaleString("pt-BR")}</p>
       </div>
@@ -288,117 +685,129 @@ function buildPrintHtml(b) {
       <p class="print-block-title">Respostas do briefing</p>
       ${answersHtml}
     </section>
-    ${resultHtml}
-  `;
+    ${stepsHtml}`;
 }
-
 function exportPdf() {
-  const b = briefings.find(x => x.id === activeId);
-  if (!b) return;
+  const b = briefings.find(x => x.id === activeId); if (!b) return;
   $("printArea").innerHTML = buildPrintHtml(b);
   window.print();
 }
 
-function sectionBlock(title, content, index) {
-  copyTargets[index] = content;
-  return `
-    <div class="detail-section">
-      <div class="detail-section-head">
-        <h3>${title}</h3>
-        <button class="copy-button" type="button" data-copy-index="${index}">Copiar</button>
-      </div>
-      <p class="section-text">${nl2br(content)}</p>
+// ---------------------------------------------------------------------------
+// Render do painel de detalhe
+// ---------------------------------------------------------------------------
+function stepCard(b, step) {
+  const st = getStep(b, step.key);
+  const state = STEP_STATES[st.status] || STEP_STATES.pendente;
+  const isOpen = openSteps.has(step.key);
+  const prompt = buildPrompt(step, b);
+  const idx = copyTargets.length;
+  copyTargets.push(prompt);
+
+  const summary = st.status === "aprovado"
+    ? `<p class="step-approved-preview">${nl2br((st.response || "").slice(0, 220))}${(st.response || "").length > 220 ? "…" : ""}</p>`
+    : "";
+
+  const body = !isOpen ? summary : `
+    <p class="step-objetivo">${escapeHtml(step.objetivo)}</p>
+    <div class="step-prompt-box"><p class="step-prompt-text">${nl2br(prompt)}</p></div>
+    <div class="step-actions">
+      <button class="copy-button" type="button" data-copy-index="${idx}">Copiar prompt</button>
     </div>
-  `;
-}
+    <label class="step-response-label">Resposta da IA
+      <textarea class="step-response" data-step="${step.key}" rows="6" placeholder="Cole aqui a resposta aprovada ou em rascunho...">${escapeHtml(st.response || "")}</textarea>
+    </label>
+    <label class="step-notes-label">Nota do operador (opcional)
+      <input class="step-notes" data-step="${step.key}" type="text" value="${escapeHtml(st.notes || "")}" placeholder="Motivo, ajuste pedido, decisão...">
+    </label>
+    <div class="step-actions">
+      <button class="ghost-button" type="button" data-save-draft="${step.key}">Salvar rascunho</button>
+      <button class="approve-button" type="button" data-set-state="aprovado" data-step="${step.key}">Aprovar</button>
+      <button class="text-button" type="button" data-set-state="revisar" data-step="${step.key}">Revisar</button>
+      <button class="text-button danger" type="button" data-set-state="rejeitado" data-step="${step.key}">Rejeitar</button>
+      <button class="text-button" type="button" data-set-state="pulada" data-step="${step.key}">Pular</button>
+    </div>`;
 
-function renderManualWizard(b) {
-  const draft = loadManualDraft(b.id);
-  const values = draft.values || {};
-  const briefingText = formatBriefingText(b.answers);
-  const ctx = { briefingText, ...values };
-  const stepIndex = MANUAL_STEPS.findIndex(s => !values[s.key]);
-  const doneCount = MANUAL_STEPS.length - (stepIndex === -1 ? 0 : MANUAL_STEPS.length - stepIndex);
-  const doneList = MANUAL_STEPS.filter(s => values[s.key])
-    .map(s => `<li><strong>${s.title}</strong> — resposta colada</li>`).join("");
-
-  let bodyHtml;
-  if (stepIndex === -1) {
-    bodyHtml = `
-      <p class="manual-hint">Todos os passos foram preenchidos. Salve para gravar esse resultado no briefing, do mesmo jeito que o processamento automático faria.</p>
-      <div class="manual-actions">
-        <button class="ghost-button" id="manualSaveButton" type="button">Salvar resultado no briefing</button>
-        <button class="text-button" id="manualBackButton" type="button">Refazer último passo</button>
-      </div>
-    `;
-  } else {
-    const step = MANUAL_STEPS[stepIndex];
-    const { system, user } = step.build(ctx);
-    const fullPrompt = `${system}\n\n---\n\n${user}`;
-    const copyIndex = copyTargets.length;
-    copyTargets[copyIndex] = fullPrompt;
-    bodyHtml = `
-      <p class="manual-hint">Copie o prompt abaixo, cole no seu GPT, e cole a resposta dele no campo abaixo.</p>
-      <div class="manual-prompt-box"><p class="manual-prompt-text">${nl2br(fullPrompt)}</p></div>
-      <div class="manual-actions">
-        <button class="copy-button" type="button" data-copy-index="${copyIndex}">Copiar prompt</button>
-        ${stepIndex > 0 ? `<button class="text-button" id="manualBackButton" type="button">Voltar ao passo anterior</button>` : ""}
-      </div>
-      <label class="manual-response-label">Resposta do GPT
-        <textarea id="manualResponseInput" rows="6" placeholder="Cole aqui a resposta..."></textarea>
-      </label>
-      <div class="manual-actions">
-        <button class="ghost-button" id="manualNextButton" type="button">Salvar resposta e gerar próximo prompt</button>
-      </div>
-    `;
-  }
-
-  const progressPct = Math.round((doneCount / MANUAL_STEPS.length) * 100);
   return `
-    <div class="detail-section manual-wizard">
-      <div class="detail-section-head">
-        <h3>Gerar manualmente (sem IA automática)</h3>
-        <span class="manual-progress">Passo ${Math.min(doneCount + 1, MANUAL_STEPS.length)} / ${MANUAL_STEPS.length}</span>
+    <div class="step-card state-${st.status}">
+      <button class="step-head" type="button" data-toggle-step="${step.key}">
+        <span class="step-chevron${isOpen ? "" : " collapsed"}">${ICON_CHEVRON}</span>
+        <span class="step-num">${step.num}</span>
+        <span class="step-title">${escapeHtml(step.title)}</span>
+        <span class="step-state-badge state-${st.status}" title="${state.hint}">${state.label}</span>
+      </button>
+      <div class="step-body">${body}</div>
+    </div>`;
+}
+
+function visualUnitsBlock(b) {
+  const p = getPipeline(b);
+  const units = p.visualUnits || [];
+  const handoffApproved = getStep(b, "handoff").status === "aprovado";
+
+  const options = Object.entries(VISUAL_UNITS)
+    .map(([k, v]) => `<option value="${k}">${v.label}</option>`).join("");
+
+  const cards = units.map((u, i) => {
+    const meta = VISUAL_UNITS[u.unitType] || { label: u.unitType, ask: "", block: "" };
+    const state = STEP_STATES[u.status] || STEP_STATES.pendente;
+    const reqPrompt = `Papel: Você é um diretor de arte gerando prompts visuais unitários.
+
+Tarefa: Escreva UM prompt de imagem só para a unidade "${meta.label}" desta marca. Peça apenas: ${meta.ask}. Bloqueie: ${meta.block}.
+
+Contexto (Handoff Visual aprovado):
+${inputContent("handoff", b)}
+
+Critérios:
+1. Uma única unidade, escopo limpo.
+2. Direção positiva conduz; NEGATIVE só como guarda-corpo.
+3. Prompt curto e específico.
+
+Saída: entregue exatamente no formato abaixo:
+\`\`\`prompt
+[prompt em uma linha]
+\`\`\`
+\`\`\`prompt
+[mesmo prompt]
+NEGATIVE: ${meta.block}
+\`\`\``;
+    const idx = copyTargets.length; copyTargets.push(reqPrompt);
+    return `
+      <div class="unit-card state-${u.status}">
+        <div class="unit-head">
+          <strong>${meta.label}</strong>
+          <span class="step-state-badge state-${u.status}">${state.label}</span>
+          <button class="icon-button danger" type="button" data-del-unit="${i}" title="Remover unidade">${ICON_DELETE}</button>
+        </div>
+        <p class="unit-scope">Pedir: ${escapeHtml(meta.ask)} · Bloquear: ${escapeHtml(meta.block)}</p>
+        <div class="step-actions"><button class="copy-button" type="button" data-copy-index="${idx}">Copiar prompt de solicitação</button></div>
+        <label class="step-response-label">Prompt final (positivo)
+          <textarea class="unit-clean" data-unit="${i}" rows="2" placeholder="Prompt limpo da unidade...">${escapeHtml(u.promptClean || "")}</textarea>
+        </label>
+        <label class="step-notes-label">NEGATIVE
+          <input class="unit-negative" data-unit="${i}" type="text" value="${escapeHtml(u.negative || "")}" placeholder="${escapeHtml(meta.block)}">
+        </label>
+        <label class="step-notes-label">Avaliação do resultado
+          <input class="unit-notes" data-unit="${i}" type="text" value="${escapeHtml(u.notes || "")}" placeholder="Aprovar, rejeitar, refinar...">
+        </label>
+        <div class="step-actions">
+          <button class="ghost-button" type="button" data-save-unit="${i}">Salvar</button>
+          <button class="approve-button" type="button" data-unit-state="aprovado" data-unit="${i}">Aprovar</button>
+          <button class="text-button" type="button" data-unit-state="revisar" data-unit="${i}">Revisar</button>
+          <button class="text-button danger" type="button" data-unit-state="rejeitado" data-unit="${i}">Rejeitar</button>
+        </div>
+      </div>`;
+  }).join("");
+
+  return `
+    <div class="units-block">
+      <div class="units-add">
+        <select id="unitTypeSelect" ${handoffApproved ? "" : "disabled"}>${options}</select>
+        <button class="ghost-button" id="addUnitButton" type="button" ${handoffApproved ? "" : "disabled"}>Adicionar unidade</button>
+        ${handoffApproved ? "" : `<span class="units-locked">Aprove o Handoff Visual para liberar a conversa visual.</span>`}
       </div>
-      <div class="manual-progress-track"><span style="width:${progressPct}%"></span></div>
-      ${doneList ? `<ul class="manual-done-list">${doneList}</ul>` : ""}
-      ${bodyHtml}
-    </div>
-  `;
-}
-
-function manualSaveStep(id) {
-  const draft = loadManualDraft(id);
-  const values = draft.values || {};
-  const stepIndex = MANUAL_STEPS.findIndex(s => !values[s.key]);
-  if (stepIndex === -1) return;
-  const response = $("manualResponseInput").value.trim();
-  if (!response) { toast("Cole a resposta antes de continuar"); return; }
-  values[MANUAL_STEPS[stepIndex].key] = response;
-  saveManualDraft(id, { values });
-  renderDetail();
-}
-
-function manualGoBack(id) {
-  const draft = loadManualDraft(id);
-  const values = draft.values || {};
-  for (let i = MANUAL_STEPS.length - 1; i >= 0; i--) {
-    if (values[MANUAL_STEPS[i].key]) { delete values[MANUAL_STEPS[i].key]; break; }
-  }
-  saveManualDraft(id, { values });
-  renderDetail();
-}
-
-async function manualSaveResult(id) {
-  const draft = loadManualDraft(id);
-  const values = draft.values || {};
-  const result = {};
-  MANUAL_STEPS.forEach(s => { if (values[s.key]) result[s.key] = values[s.key]; });
-  const { error } = await client.from("briefings").update({ status: "pronto", result, error: null }).eq("id", id);
-  if (error) { toast("Erro ao salvar resultado"); return; }
-  clearManualDraft(id);
-  toast("Resultado salvo no briefing");
-  await loadBriefings();
+      ${cards || `<p class="empty-state small">Nenhuma unidade visual ainda.</p>`}
+    </div>`;
 }
 
 function renderDetail() {
@@ -409,21 +818,13 @@ function renderDetail() {
   copyTargets = [];
   const answersEntries = Object.entries(b.answers || {});
   const answersText = answersEntries.map(([q, a]) => `${q}\n${a}`).join("\n\n");
-  const answersHtml = `<div class="answers-grid">${answersEntries.map(([q, a]) => `
-    <div class="qa"><strong>${escapeHtml(q)}</strong><span>${escapeHtml(a)}</span></div>
-  `).join("")}</div>`;
-
-  let resultHtml = "";
-  if (b.status === "processando") resultHtml = `<p class="empty-state">Processando com IA...</p>`;
-  else if (b.status === "erro") resultHtml = `<p class="empty-state">Erro no processamento: ${escapeHtml(b.error || "")}</p>`;
-  else if (b.status === "pronto" && b.result) {
-    resultHtml = RESULT_SECTIONS
-      .filter(([key]) => b.result[key])
-      .map(([key, title], i) => sectionBlock(title, b.result[key], i + 1))
-      .join("");
-  }
-  const manualHtml = b.status === "pronto" ? "" : renderManualWizard(b);
+  const answersHtml = `<div class="answers-grid">${answersEntries.map(([q, a]) =>
+    `<div class="qa"><strong>${escapeHtml(q)}</strong><span>${escapeHtml(a)}</span></div>`).join("")}</div>`;
   const answersCollapsed = collapsedAnswers.has(b.id);
+  copyTargets.push(answersText); // index 0
+
+  const estrategicas = PIPELINE.filter(s => s.conversa === "estrategica" || s.conversa === "transicao");
+  const visuais = PIPELINE.filter(s => s.conversa === "visual");
 
   detail.innerHTML = `
     <div class="detail-header">
@@ -434,11 +835,14 @@ function renderDetail() {
       </div>
       <div class="detail-toolbar">
         <button class="ghost-button" id="editNameButton" type="button">Editar</button>
-        <button class="ghost-button" id="copyMarkdownButton" type="button">Copiar Markdown</button>
-        <button class="ghost-button" id="exportMarkdownButton" type="button">Baixar .md</button>
-        <button class="ghost-button" id="exportPdfButton" type="button">Exportar PDF</button>
+        <button class="ghost-button" id="libraryButton" type="button">Biblioteca Estratégica</button>
+        <button class="ghost-button" id="copyDossieButton" type="button">Copiar dossiê</button>
+        <button class="ghost-button" id="exportDossieButton" type="button">Baixar dossiê .md</button>
+        <button class="ghost-button" id="exportPdfButton" type="button">PDF</button>
+        <button class="ghost-button" id="finalizarButton" type="button">Finalizar dossiê</button>
       </div>
     </div>
+
     <div class="detail-section">
       <div class="detail-section-head">
         <button class="detail-section-head-left" id="toggleAnswersButton" type="button">
@@ -449,33 +853,132 @@ function renderDetail() {
       </div>
       ${answersCollapsed ? "" : answersHtml}
     </div>
-    ${resultHtml}
-    ${manualHtml}
-  `;
-  copyTargets[0] = answersText;
 
+    <div class="pipeline-group">
+      <h3 class="pipeline-group-title">${CONVERSAS.estrategica} <span>estratégia → verbal → direção visual escrita, sem imagem</span></h3>
+      ${estrategicas.map(s => stepCard(b, s)).join("")}
+    </div>
+
+    <div class="pipeline-group">
+      <h3 class="pipeline-group-title">${CONVERSAS.visual} <span>uma unidade por vez, só depois do Handoff aprovado</span></h3>
+      <div class="step-card static">
+        <div class="step-head static"><span class="step-num">13</span><span class="step-title">Exploração Visual Unitária</span></div>
+        <div class="step-body">${visualUnitsBlock(b)}</div>
+      </div>
+      ${visuais.map(s => stepCard(b, s)).join("")}
+    </div>`;
+
+  // --- listeners de topo ---
   $("editNameButton").addEventListener("click", () => renameBriefing(b.id));
-  $("copyMarkdownButton").addEventListener("click", copyMarkdown);
-  $("exportMarkdownButton").addEventListener("click", exportMarkdown);
+  $("libraryButton").addEventListener("click", openLibraryModal);
+  $("copyDossieButton").addEventListener("click", copyDossie);
+  $("exportDossieButton").addEventListener("click", exportDossieMd);
   $("exportPdfButton").addEventListener("click", exportPdf);
+  $("finalizarButton").addEventListener("click", finalizarDossie);
   $("toggleAnswersButton").addEventListener("click", () => {
-    if (collapsedAnswers.has(b.id)) collapsedAnswers.delete(b.id);
-    else collapsedAnswers.add(b.id);
+    if (collapsedAnswers.has(b.id)) collapsedAnswers.delete(b.id); else collapsedAnswers.add(b.id);
     renderDetail();
   });
-  detail.querySelectorAll("[data-copy-index]").forEach(btn => {
-    btn.addEventListener("click", () => copyText(copyTargets[Number(btn.dataset.copyIndex)] || ""));
-  });
-  const manualNextButton = $("manualNextButton");
-  if (manualNextButton) manualNextButton.addEventListener("click", () => manualSaveStep(b.id));
-  const manualBackButton = $("manualBackButton");
-  if (manualBackButton) manualBackButton.addEventListener("click", () => manualGoBack(b.id));
-  const manualSaveButton = $("manualSaveButton");
-  if (manualSaveButton) manualSaveButton.addEventListener("click", () => manualSaveResult(b.id));
+
+  // --- copiar (prompts, respostas) ---
+  detail.querySelectorAll("[data-copy-index]").forEach(btn =>
+    btn.addEventListener("click", () => copyText(copyTargets[Number(btn.dataset.copyIndex)] || "")));
+
+  // --- toggle etapa ---
+  detail.querySelectorAll("[data-toggle-step]").forEach(btn => btn.addEventListener("click", () => {
+    const k = btn.dataset.toggleStep;
+    if (openSteps.has(k)) openSteps.delete(k); else openSteps.add(k);
+    renderDetail();
+  }));
+
+  // --- salvar rascunho / mudar estado das etapas ---
+  detail.querySelectorAll("[data-save-draft]").forEach(btn =>
+    btn.addEventListener("click", () => saveStep(b, btn.dataset.saveDraft, "rascunho")));
+  detail.querySelectorAll("[data-set-state]").forEach(btn =>
+    btn.addEventListener("click", () => saveStep(b, btn.dataset.step, btn.dataset.setState)));
+
+  // --- unidades visuais ---
+  const addBtn = $("addUnitButton");
+  if (addBtn) addBtn.addEventListener("click", () => addVisualUnit(b, $("unitTypeSelect").value));
+  detail.querySelectorAll("[data-save-unit]").forEach(btn =>
+    btn.addEventListener("click", () => saveVisualUnit(b, Number(btn.dataset.saveUnit))));
+  detail.querySelectorAll("[data-unit-state]").forEach(btn =>
+    btn.addEventListener("click", () => saveVisualUnit(b, Number(btn.dataset.unit), btn.dataset.unitState)));
+  detail.querySelectorAll("[data-del-unit]").forEach(btn =>
+    btn.addEventListener("click", () => removeVisualUnit(b, Number(btn.dataset.delUnit))));
 }
 
+// ---------------------------------------------------------------------------
+// Ações de etapa
+// ---------------------------------------------------------------------------
+function readStepInputs(key) {
+  const ta = document.querySelector(`.step-response[data-step="${key}"]`);
+  const nt = document.querySelector(`.step-notes[data-step="${key}"]`);
+  return { response: ta ? ta.value : undefined, notes: nt ? nt.value : undefined };
+}
+async function saveStep(b, key, status) {
+  const p = getPipeline(b);
+  const prev = p.steps[key] || {};
+  const live = readStepInputs(key);
+  const response = live.response !== undefined ? live.response.trim() : (prev.response || "");
+  const notes = live.notes !== undefined ? live.notes : (prev.notes || "");
+  if ((status === "aprovado" || status === "rascunho") && !response) {
+    toast("Cole a resposta antes de salvar"); return;
+  }
+  p.steps[key] = {
+    ...prev, status, response, notes,
+    updatedAt: nowIso(),
+    approvedAt: status === "aprovado" ? nowIso() : prev.approvedAt || null,
+  };
+  if (await savePipeline(b, p)) {
+    toast(`${STEP_BY_KEY[key].title}: ${(STEP_STATES[status] || {}).label || status}`);
+    if (status === "aprovado") openSteps.delete(key);
+    await loadBriefings();
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Ações de unidade visual
+// ---------------------------------------------------------------------------
+async function addVisualUnit(b, unitType) {
+  const p = getPipeline(b);
+  p.visualUnits = p.visualUnits || [];
+  p.visualUnits.push({ unitType, status: "pendente", promptClean: "", negative: "", notes: "", updatedAt: nowIso() });
+  if (await savePipeline(b, p)) { toast("Unidade adicionada"); await loadBriefings(); }
+}
+function readUnitInputs(i) {
+  const clean = document.querySelector(`.unit-clean[data-unit="${i}"]`);
+  const neg = document.querySelector(`.unit-negative[data-unit="${i}"]`);
+  const notes = document.querySelector(`.unit-notes[data-unit="${i}"]`);
+  return {
+    promptClean: clean ? clean.value : undefined,
+    negative: neg ? neg.value : undefined,
+    notes: notes ? notes.value : undefined,
+  };
+}
+async function saveVisualUnit(b, i, status) {
+  const p = getPipeline(b);
+  const u = (p.visualUnits || [])[i]; if (!u) return;
+  const live = readUnitInputs(i);
+  if (live.promptClean !== undefined) u.promptClean = live.promptClean.trim();
+  if (live.negative !== undefined) u.negative = live.negative.trim();
+  if (live.notes !== undefined) u.notes = live.notes;
+  if (status) u.status = status;
+  u.updatedAt = nowIso();
+  if (await savePipeline(b, p)) { toast(status ? (STEP_STATES[status] || {}).label : "Unidade salva"); await loadBriefings(); }
+}
+async function removeVisualUnit(b, i) {
+  if (!window.confirm("Remover esta unidade visual?")) return;
+  const p = getPipeline(b);
+  (p.visualUnits || []).splice(i, 1);
+  if (await savePipeline(b, p)) { toast("Unidade removida"); await loadBriefings(); }
+}
+
+// ---------------------------------------------------------------------------
+// Importar briefing (.md)
+// ---------------------------------------------------------------------------
 function parseBriefingMarkdown(text) {
-  const titleMatch = text.match(/^#\s*Briefing:\s*(.+)$/m);
+  const titleMatch = text.match(/^#\s*(?:Briefing|Dossiê Final)[:\s—-]*\s*(.+)$/m);
   const clientName = titleMatch ? titleMatch[1].trim() : null;
   const sectionMatch = text.match(/##\s*Respostas do briefing\s*\n([\s\S]*?)(?:\n##\s|$)/);
   const answers = {};
@@ -484,14 +987,12 @@ function parseBriefingMarkdown(text) {
     entries.forEach(entry => {
       const m = entry.match(/^\*\*(.+?)\*\*\s*\n([\s\S]*)$/);
       if (!m) return;
-      const question = m[1].trim();
-      const answer = m[2].trim();
-      if (question && answer) answers[question] = answer;
+      const q = m[1].trim(), a = m[2].trim();
+      if (q && a) answers[q] = a;
     });
   }
   return { clientName: clientName && clientName !== "Sem nome" ? clientName : null, answers };
 }
-
 async function importMarkdownFile(file) {
   const text = await file.text();
   const { clientName, answers } = parseBriefingMarkdown(text);
@@ -501,6 +1002,9 @@ async function importMarkdownFile(file) {
   toast("Briefing importado");
 }
 
+// ---------------------------------------------------------------------------
+// Carga / realtime
+// ---------------------------------------------------------------------------
 async function loadBriefings() {
   const { data, error } = await client.from("briefings").select("*").order("created_at", { ascending: false });
   if (error) return;
@@ -509,22 +1013,19 @@ async function loadBriefings() {
   renderList();
   renderDetail();
 }
-
 function subscribeRealtime() {
-  channel = client
-    .channel("briefings-changes")
+  channel = client.channel("briefings-changes")
     .on("postgres_changes", { event: "*", schema: "public", table: "briefings" }, loadBriefings)
     .subscribe();
 }
-
 async function showHub() {
   document.body.dataset.view = "hub";
   $("loginScreen").style.display = "none";
   $("hubScreen").style.display = "block";
+  await loadLibrary();
   await loadBriefings();
   subscribeRealtime();
 }
-
 function toast(message) {
   $("toast").textContent = message;
   $("toast").classList.add("show");
@@ -532,6 +1033,9 @@ function toast(message) {
   toast._t = setTimeout(() => $("toast").classList.remove("show"), 1800);
 }
 
+// ---------------------------------------------------------------------------
+// Init
+// ---------------------------------------------------------------------------
 (async function init() {
   const supabase = getClient();
   if (!supabase) return;
@@ -548,3 +1052,8 @@ $("importFileInput").addEventListener("change", async () => {
   if (file) await importMarkdownFile(file);
   $("importFileInput").value = "";
 });
+$("libraryCloseButton").addEventListener("click", closeLibraryModal);
+$("libraryCopyButton").addEventListener("click", () => copyText($("libraryTextarea").value, "Biblioteca"));
+$("librarySaveButton").addEventListener("click", saveLibraryEdit);
+$("libraryResetButton").addEventListener("click", resetLibrary);
+$("libraryModal").addEventListener("click", e => { if (e.target === $("libraryModal")) closeLibraryModal(); });
