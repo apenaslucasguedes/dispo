@@ -204,7 +204,13 @@ kbd { border: 1px solid var(--line); border-radius: 4px; padding: 2px 5px; font:
 .section-break > p:not(.eyebrow) { max-width: 520px; color: var(--muted); line-height: 1.6; font-size: 15px; margin: 0 0 36px; padding-top: 26px; border-top: 1px solid var(--line); }
 .completion { text-align: center; flex-direction: column; justify-content: center; align-items: center; padding-top: 55px; }
 .completion-mark { width: 46px; height: 46px; border: 1px solid var(--ink); border-radius: 50%; display: grid; place-content: center; margin-bottom: 28px; }
-.completion-mark svg { display: block; }
+.completion-mark svg { display: none; grid-area: 1 / 1; }
+.completion-mark .icon-pending { animation: spin 1.4s linear infinite; }
+.completion[data-state="pending"] .completion-mark .icon-pending,
+.completion[data-state="success"] .completion-mark .icon-success,
+.completion[data-state="error"] .completion-mark .icon-error { display: block; }
+.completion[data-state="error"] .completion-mark { border-color: #b3261e; color: #b3261e; }
+@keyframes spin { to { transform: rotate(360deg); } }
 .completion h2 { font: 700 clamp(50px, 6.2vw, 92px)/.92 var(--sans); max-width: 850px; margin: 0 0 28px; letter-spacing: -.04em; overflow-wrap: break-word; hyphens: auto; }
 .completion > p:not(.eyebrow) { max-width: 540px; color: var(--muted); line-height: 1.6; margin: 0; }
 .completion-fallback { margin-top: 32px; padding-top: 28px; border-top: 1px solid var(--line); max-width: 480px; }

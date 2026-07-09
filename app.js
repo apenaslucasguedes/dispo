@@ -404,12 +404,32 @@ function showSectionBreak(index) {
   showScreen("sectionScreen");
 }
 
+function setCompletionState(kind) {
+  $("completionScreen").dataset.state = kind;
+  if (kind === "pending") {
+    $("completionEyebrow").textContent = "Enviando briefing…";
+    $("completionTitle").textContent = "Só um instante.";
+    $("completionText").textContent = "Estamos enviando suas respostas.";
+    $("completionFallback").style.display = "none";
+  } else if (kind === "success") {
+    $("completionEyebrow").textContent = "Briefing enviado";
+    $("completionTitle").textContent = "Agora temos um bom lugar para começar.";
+    $("completionText").textContent = "Suas respostas foram enviadas para processamento. A partir daqui, elas serão organizadas em uma direção visual para a criação da sua marca.";
+    $("completionFallback").style.display = "none";
+  } else {
+    $("completionEyebrow").textContent = "Envio não concluído";
+    $("completionTitle").textContent = "Não foi possível enviar agora.";
+    $("completionText").textContent = "Suas respostas estão salvas neste dispositivo. Baixe o arquivo para não perder nada ou tente enviar novamente.";
+    $("completionFallback").style.display = "block";
+  }
+}
+
 function finish() {
   saveAnswer();
   state.completed = true;
   persist();
+  setCompletionState("pending");
   showScreen("completionScreen");
-  $("completionFallback").style.display = "none";
   submitBriefing();
 }
 
@@ -442,7 +462,7 @@ function formatAnswer(q) {
 async function submitBriefing() {
   if (state.submitted) return;
   const client = getSupabase();
-  if (!client) { $("completionFallback").style.display = "block"; return; }
+  if (!client) { setCompletionState("error"); return; }
   const readableAnswers = {};
   questions.forEach(q => {
     const formatted = formatAnswer(q);
@@ -452,13 +472,13 @@ async function submitBriefing() {
   const { error } = await client.from("briefings").insert({ answers: readableAnswers, client_name: clientName });
   if (error) {
     toast("Não foi possível enviar o briefing para a nuvem");
-    $("completionFallback").style.display = "block";
+    setCompletionState("error");
     return;
   }
   state.submitted = true;
   persist();
   toast("Briefing enviado para processamento");
-  $("completionFallback").style.display = "none";
+  setCompletionState("success");
 }
 
 function buildAnswersMarkdown() {
@@ -541,7 +561,7 @@ document.querySelector(".brand").addEventListener("click", event => {
 });
 $("sectionContinue").addEventListener("click", () => { showScreen("questionScreen"); renderQuestion(); });
 $("downloadAnswersButton").addEventListener("click", downloadAnswers);
-$("retrySubmitButton").addEventListener("click", () => { toast("Reenviando..."); submitBriefing(); });
+$("retrySubmitButton").addEventListener("click", () => { setCompletionState("pending"); submitBriefing(); });
 $("nextButton").addEventListener("click", nextQuestion);
 $("backButton").addEventListener("click", previousQuestion);
 $("answerInput").addEventListener("input", () => { saveAnswer(); $("skipButton").textContent = hasAnswer(questions[state.current]) ? "Limpar resposta" : "Prefiro responder depois"; });
