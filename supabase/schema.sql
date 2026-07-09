@@ -13,9 +13,12 @@ create table if not exists briefings (
 -- Ninguém lê/edita direto pelo cliente público exceto inserir o próprio briefing.
 alter table briefings enable row level security;
 
+-- "anon" cobre o formulário público; "authenticated" cobre a importação de .md
+-- feita de dentro do hub admin (logado). Sem "authenticated" aqui, o RLS bloqueia
+-- silenciosamente o insert e o botão "Importar briefing (.md)" sempre falha.
 create policy "qualquer um pode inserir um briefing"
   on briefings for insert
-  to anon
+  to anon, authenticated
   with check (true);
 
 -- Leitura e atualização só para usuários autenticados (você, no hub admin).
