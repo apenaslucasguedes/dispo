@@ -97,7 +97,7 @@ button { cursor: pointer; }
 .hub-intro-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
 .hub-body { padding: 20px var(--edge) 0; display: grid; grid-template-columns: minmax(260px, 340px) 1fr; gap: 30px; align-items: start; }
 
-.briefing-list { display: flex; flex-direction: column; gap: 10px; max-height: 82vh; overflow-y: auto; }
+.briefing-list { display: flex; flex-direction: column; gap: 10px; max-height: 82vh; overflow-y: auto; overflow-x: clip; }
 .briefing-item-wrap { position: relative; }
 .briefing-item { width: 100%; border: 1px solid var(--line); border-radius: 14px; padding: 15px 60px 15px 17px; background: #fff; text-align: left; transition: border-color .2s, border-width .2s, transform .2s; }
 .briefing-item:hover { border-color: var(--ink); transform: translateY(-1px); }
@@ -150,8 +150,12 @@ button { cursor: pointer; }
 .step-card:hover { border-color: rgba(17,17,15,.32); }
 .step-card.state-aprovado { border-color: #9ec49a; background: #fbfdfa; }
 .step-card.state-rejeitado { opacity: .72; }
-.step-head { width: 100%; display: flex; align-items: center; gap: 12px; padding: 14px 18px; background: none; border: 0; text-align: left; color: inherit; }
+.step-head-row { display: flex; align-items: center; }
+.step-head { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 14px 18px; background: none; border: 0; text-align: left; color: inherit; }
 .step-head.static { cursor: default; }
+.step-copy-btn { flex-shrink: 0; width: 30px; height: 30px; margin-right: 12px; border: 1px solid var(--line); background: #fff; color: var(--muted); border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; transition: border-color .2s, color .2s; }
+.step-copy-btn svg { width: 14px; height: 14px; }
+.step-copy-btn:hover { border-color: var(--ink); color: var(--ink); }
 .step-chevron { width: 11px; height: 11px; flex-shrink: 0; color: var(--muted); transition: transform .2s; }
 .step-chevron.collapsed { transform: rotate(-90deg); }
 .step-num { flex-shrink: 0; width: 24px; height: 24px; border-radius: 7px; background: var(--paper-deep); color: var(--ink); font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }
@@ -169,7 +173,6 @@ button { cursor: pointer; }
 .step-card:not(.static) .step-body:empty { display: none; }
 .step-body:not(:empty) { padding-bottom: 18px; }
 .step-objetivo { color: var(--muted); font-size: 12.5px; margin: 0 0 12px; }
-.step-approved-preview { white-space: pre-wrap; font-size: 13px; line-height: 1.55; color: #3a382f; margin: 0 0 4px; }
 .step-prompt-box { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; max-height: 240px; overflow-y: auto; margin-bottom: 12px; }
 .step-prompt-text { white-space: pre-wrap; font-family: var(--sans); font-size: 12.5px; line-height: 1.55; margin: 0; color: #26241f; }
 .step-actions { display: flex; align-items: center; gap: 10px; margin: 12px 0 4px; flex-wrap: wrap; }

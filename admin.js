@@ -17,6 +17,7 @@ const ICON_FLAG = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" st
 const ICON_REJECT = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l8 8M12 4l-8 8"/></svg>`;
 const ICON_SKIP = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v10"/><path d="M6.3 8l6-4.3v8.6z"/></svg>`;
 const ICON_DRAFT = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="5.8" stroke-dasharray="2.4 2.6"/></svg>`;
+const ICON_COPY = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5"/><path d="M10.5 5.5V4a1.5 1.5 0 0 0-1.5-1.5H4A1.5 1.5 0 0 0 2.5 4v5A1.5 1.5 0 0 0 4 10.5h1.5"/></svg>`;
 
 // ---------------------------------------------------------------------------
 // Estados de aprovação por etapa (documento, seção 4.6)
@@ -441,12 +442,33 @@ function inputContent(key, b) {
   return `[⚠ ${STEP_BY_KEY[key] ? STEP_BY_KEY[key].title : key} ainda não aprovado]`;
 }
 
+// Cada "conversa" acontece num chat único de IA. Etapas da estratégia e a
+// transição (Handoff) rodam no MESMO chat; a conversa visual é um chat novo.
+// Regra 4.8: dentro do mesmo chat não repetimos artefatos já produzidos —
+// só referenciamos. O conteúdo só é embutido quando cruza para outro chat.
+const CHAT_OF_CONVERSA = { estrategica: "estrategico", transicao: "estrategico", visual: "visual" };
+function chatOfStep(conversa) { return CHAT_OF_CONVERSA[conversa] || null; }
+function chatOfInput(key) {
+  if (key === "briefingBruto") return "externo";       // veio do formulário, não do chat
+  if (key === "visualUnitsResumo") return "visual";
+  const s = STEP_BY_KEY[key];
+  return s ? chatOfStep(s.conversa) : "externo";
+}
+
 function buildPrompt(step, b) {
   const blocks = [];
   blocks.push(`Papel: ${step.papel}`);
   blocks.push(`Tarefa: ${step.tarefa}`);
 
-  const contextParts = (step.inputs || []).map(k => `## ${inputLabel(k, b)}\n${inputContent(k, b)}`);
+  const curChat = chatOfStep(step.conversa);
+  const contextParts = (step.inputs || []).map(k => {
+    const label = inputLabel(k, b);
+    // Mesmo chat: já está na conversa, não repetir — apenas referenciar.
+    if (curChat && chatOfInput(k) === curChat) {
+      return `## ${label}\n[Já produzido nesta conversa. Use a versão que você aprovou acima; não repita o conteúdo.]`;
+    }
+    return `## ${label}\n${inputContent(k, b)}`;
+  });
   if (step.needsLibrary) {
     contextParts.push(`## Biblioteca Estratégica (${libraryMeta.count} ferramentas)\n${libraryMarkdown || "[⚠ biblioteca não carregada]"}`);
   }
@@ -723,11 +745,7 @@ function stepCard(b, step) {
   const idx = copyTargets.length;
   copyTargets.push(prompt);
 
-  const summary = st.status === "aprovado"
-    ? `<p class="step-approved-preview">${nl2br((st.response || "").slice(0, 220))}${(st.response || "").length > 220 ? "…" : ""}</p>`
-    : "";
-
-  const body = !isOpen ? summary : `
+  const body = !isOpen ? "" : `
     <p class="step-objetivo">${escapeHtml(step.objetivo)}</p>
     <div class="step-prompt-box"><p class="step-prompt-text">${nl2br(prompt)}</p></div>
     <div class="step-actions">
@@ -747,14 +765,21 @@ function stepCard(b, step) {
       <button class="text-button icon-label" type="button" data-set-state="pulada" data-step="${step.key}" data-tooltip="Pular esta etapa. Ela fica marcada como pulada e o fluxo segue sem ela.">${ICON_SKIP}<span>Pular</span></button>
     </div>`;
 
+  const copyBtn = st.status === "aprovado" && st.response
+    ? `<button class="step-copy-btn" type="button" data-copy-response="${step.key}" aria-label="Copiar resposta aprovada" data-tooltip="Copiar a resposta aprovada para colar em outra conversa">${ICON_COPY}</button>`
+    : "";
+
   return `
     <div class="step-card state-${st.status}">
-      <button class="step-head" type="button" data-toggle-step="${step.key}">
-        <span class="step-chevron${isOpen ? "" : " collapsed"}">${ICON_CHEVRON}</span>
-        <span class="step-num">${step.num}</span>
-        <span class="step-title">${escapeHtml(step.title)}</span>
-        <span class="step-state-badge state-${st.status}" data-tooltip="${state.hint}">${state.label}</span>
-      </button>
+      <div class="step-head-row">
+        <button class="step-head" type="button" data-toggle-step="${step.key}">
+          <span class="step-chevron${isOpen ? "" : " collapsed"}">${ICON_CHEVRON}</span>
+          <span class="step-num">${step.num}</span>
+          <span class="step-title">${escapeHtml(step.title)}</span>
+          <span class="step-state-badge state-${st.status}" data-tooltip="${state.hint}">${state.label}</span>
+        </button>
+        ${copyBtn}
+      </div>
       <div class="step-body">${body}</div>
     </div>`;
 }
@@ -898,6 +923,13 @@ function renderDetail() {
   // --- copiar (prompts, respostas) ---
   detail.querySelectorAll("[data-copy-index]").forEach(btn =>
     btn.addEventListener("click", () => copyText(copyTargets[Number(btn.dataset.copyIndex)] || "")));
+
+  // --- copiar resposta aprovada (cabeçalho da etapa) ---
+  detail.querySelectorAll("[data-copy-response]").forEach(btn => btn.addEventListener("click", e => {
+    e.stopPropagation();
+    const key = btn.dataset.copyResponse;
+    copyText(getStep(b, key).response || "", STEP_BY_KEY[key] ? STEP_BY_KEY[key].title : "Resposta");
+  }));
 
   // --- toggle etapa ---
   detail.querySelectorAll("[data-toggle-step]").forEach(btn => btn.addEventListener("click", () => {
