@@ -5,6 +5,7 @@ const allowedSteps = new Set(["h_entrada","h_brief","h_ferramenta","h_pesquisa",
 const allowedStatuses = new Set(["sem_conteudo","rascunho","aprovado","aprovado_com_ressalvas","revisar","rejeitado","pulada","bloqueado","erro"]);
 const secretKey = /^(?:api[_-]?key|access[_-]?token|authorization|client[_-]?secret|password|private[_-]?key|secret|service[_-]?role)$/i;
 const secretValue = /-----BEGIN .*PRIVATE KEY-----|\beyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b|\b(?:sk-ant-|sk-|ghp_|github_pat_)[A-Za-z0-9_-]{16,}\b|SUPABASE_SERVICE_ROLE_KEY|\bservice_role\b/i;
+const maxBodyBytes = 5 * 1024 * 1024;
 const reply = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: cors });
 
 function timingSafeEqual(a: string, b: string) {
@@ -12,6 +13,21 @@ function timingSafeEqual(a: string, b: string) {
   if (aa.length !== bb.length) return false;
   let diff = 0; for (let i = 0; i < aa.length; i++) diff |= aa[i] ^ bb[i];
   return diff === 0;
+}
+
+async function readJsonLimited(req: Request) {
+  if (!req.body) throw new Error("invalid_json");
+  const reader = req.body.getReader(); const chunks: Uint8Array[] = []; let size = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > maxBodyBytes) { await reader.cancel(); throw new Error("payload_too_large"); }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(size); let offset = 0;
+  for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+  return JSON.parse(new TextDecoder().decode(bytes));
 }
 
 function validate(payload: any) {
@@ -72,9 +88,11 @@ function verification(result: any, beforeResult: any, payload: any) {
   const hermes = result?.hermes;
   const verifiedStepCount = hermes?.steps && typeof hermes.steps === "object" ? Object.keys(hermes.steps).length : 0;
   const verifiedContentMatches = payload.steps.every((step: any) => hermes?.steps?.[step.key]?.generatedMarkdown === step.displayMarkdown);
+  const verifiedIdentityMatches = hermes?.provider === "hermes" && hermes?.projectSlug === payload.projectSlug && hermes?.brandName === payload.brandName && hermes?.cardTitle === payload.cardTitle && hermes?.lastIdempotencyKey === (payload.idempotencyKey || null);
   return {
     verifiedStepCount,
     verifiedContentMatches,
+    verifiedIdentityMatches,
     verifiedCardTitle: hermes?.cardTitle || null,
     verifiedProjectSlug: hermes?.projectSlug || null,
     unrelatedResultPreserved: JSON.stringify(withoutHermes(result)) === JSON.stringify(withoutHermes(beforeResult)),
@@ -83,11 +101,12 @@ function verification(result: any, beforeResult: any, payload: any) {
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") return reply(405, { error: "method_not_allowed" });
-  if (Number(req.headers.get("content-length") || 0) > 5 * 1024 * 1024) return reply(413, { error: "payload_too_large" });
+  if (Number(req.headers.get("content-length") || 0) > maxBodyBytes) return reply(413, { error: "payload_too_large" });
   const expected = Deno.env.get("HERMES_SYNC_SECRET") || "";
   const supplied = req.headers.get("x-hermes-secret") || "";
   if (!expected || !timingSafeEqual(expected, supplied)) return reply(401, { error: "unauthorized" });
-  let body: any; try { body = await req.json(); } catch { return reply(400, { error: "invalid_json" }); }
+  let body: any; try { body = await readJsonLimited(req); } catch (error) { return reply(error instanceof Error && error.message === "payload_too_large" ? 413 : 400, { error: error instanceof Error ? error.message : "invalid_json" }); }
+  if (!body || typeof body !== "object" || Array.isArray(body)) return reply(400, { error: "invalid_body" });
   const payload = body.payload || body; const error = validate(payload); if (error) return reply(400, { error });
   if (hasSecret(payload)) return reply(400, { error: "payload_security_violation" });
 
@@ -99,13 +118,17 @@ Deno.serve(async (req) => {
   if (readError || !row) return reply(404, { error: "briefing_not_found" });
   const current = row.result?.hermes || null;
   if (current?.projectSlug && current.projectSlug !== payload.projectSlug) return reply(409, { error: "project_identity_mismatch" });
-  if (payload.idempotencyKey && current?.lastIdempotencyKey === payload.idempotencyKey) return reply(200, { synced: true, idempotent: true, briefingId, steps: payload.steps.length, updatedAt: current.updatedAt, ...verification(row.result, row.result, payload) });
+  if (payload.idempotencyKey && current?.lastIdempotencyKey === payload.idempotencyKey) {
+    const proof = verification(row.result, row.result, payload);
+    if (proof.verifiedStepCount !== payload.steps.length || !proof.verifiedContentMatches || !proof.verifiedIdentityMatches) return reply(500, { error: "verification_failed" });
+    return reply(200, { synced: true, idempotent: true, briefingId, steps: payload.steps.length, updatedAt: current.updatedAt, ...proof });
+  }
   const hermes = merge(current, payload); hermes.lastIdempotencyKey = payload.idempotencyKey || null;
   const { error: rpcError } = await supabase.rpc("upsert_briefing_hermes", { p_briefing_id: briefingId, p_hermes: hermes, p_expected_updated_at: current?.updatedAt || "__absent__" });
   if (rpcError) return reply(409, { error: "sync_conflict" });
   const { data: verifiedRow, error: verifyError } = await supabase.from("briefings").select("result").eq("id", briefingId).single();
   if (verifyError || !verifiedRow) return reply(500, { error: "verification_failed" });
   const proof = verification(verifiedRow.result, row.result, payload);
-  if (proof.verifiedStepCount !== payload.steps.length || !proof.verifiedContentMatches || proof.verifiedProjectSlug !== payload.projectSlug || !proof.unrelatedResultPreserved) return reply(500, { error: "verification_failed" });
+  if (proof.verifiedStepCount !== payload.steps.length || !proof.verifiedContentMatches || !proof.verifiedIdentityMatches || proof.verifiedProjectSlug !== payload.projectSlug || !proof.unrelatedResultPreserved) return reply(500, { error: "verification_failed" });
   return reply(200, { synced: true, idempotent: false, briefingId, steps: payload.steps.length, updatedAt: hermes.updatedAt, ...proof });
 });

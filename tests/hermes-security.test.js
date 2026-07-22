@@ -70,6 +70,9 @@ assert.match(edge, /lastIdempotencyKey/);
 assert.match(edge, /unrelatedResultPreserved/);
 assert.match(edge, /verifiedStepCount/);
 assert.match(edge, /verifiedContentMatches/);
+assert.match(edge, /readJsonLimited/);
+assert.match(edge, /invalid_body/);
+assert.match(edge, /verifiedIdentityMatches/);
 assert.match(edge, /verification_failed/);
 assert.doesNotMatch(edge, /console\.(?:log|error).*secret/i);
 
