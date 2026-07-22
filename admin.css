@@ -103,7 +103,7 @@ button { cursor: pointer; }
 .briefing-item:hover { border-color: var(--ink); }
 .briefing-item.active { border-width: 2px; border-color: var(--ink); }
 .briefing-item small { display: block; color: var(--muted); font-size: 11px; margin-bottom: 5px; }
-.briefing-item strong { display: block; font-size: 15px; font-weight: 600; }
+.briefing-item strong { display: block; font-size: 15px; font-weight: 600; line-height: 1.25; overflow-wrap: anywhere; }
 .item-actions { position: absolute; top: 12px; right: 12px; display: flex; gap: 6px; opacity: 0; transition: opacity .15s; }
 .briefing-item-wrap:hover .item-actions, .briefing-item-wrap:has(.briefing-item.active) .item-actions { opacity: 1; }
 .icon-button { width: 27px; height: 27px; border: 1px solid var(--line); background: #fff; color: var(--muted); border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; transition: border-color .2s, color .2s; }
@@ -119,7 +119,7 @@ button { cursor: pointer; }
 .ai-seg.on { color: #fff; }
 .ai-seg.on[data-ai="claude"] { background: #d97757; border-color: #d97757; }
 .ai-seg.on[data-ai="gpt"] { background: #10a37f; border-color: #10a37f; }
-.ai-seg.hermes-seg.on { background: #1a1a2e; border-color: #1a1a2e; color: #fff; }
+.ai-seg.hermes-seg.on { background: var(--hermes-blue, #0057FF); border-color: var(--hermes-blue, #0057FF); color: #fff; }
 .status-badge { display: inline-block; font-size: 10px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; padding: 4px 10px; border-radius: 999px; margin-top: 8px; }
 .status-recebido { background: var(--paper-deep); color: var(--ink); }
 .status-processando { background: #f4dfa8; color: #5c4711; }
@@ -130,7 +130,7 @@ button { cursor: pointer; }
 .empty-state { color: var(--muted); }
 
 .detail-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; flex-wrap: wrap; padding-bottom: 22px; margin-bottom: 26px; border-bottom: 1px solid var(--line); }
-.detail-header h2 { font: 700 clamp(26px, 2.6vw, 36px)/1.1 var(--sans); letter-spacing: -.02em; margin: 4px 0 8px; }
+.detail-header h2 { font: 700 clamp(26px, 2.6vw, 36px)/1.1 var(--sans); letter-spacing: -.02em; margin: 4px 0 8px; overflow-wrap: anywhere; }
 .detail-meta { color: var(--muted); font-size: 12.5px; }
 .detail-toolbar { display: flex; gap: 10px; flex-wrap: wrap; }
 .hub-import-actions { margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
@@ -255,15 +255,9 @@ button { cursor: pointer; }
 
 /* --- Hermes provider --- */
 :root { --hermes-blue: #0057FF; --hermes-blue-soft: #EAF1FF; --hermes-blue-border: #8CB4FF; }
-.hermes-list-card { min-height: 112px; padding-right: 64px; border-color: var(--hermes-blue); color: var(--ink); }
-.hermes-list-card:hover { border-color: var(--hermes-blue); box-shadow: 0 0 0 1px var(--hermes-blue); }
-.hermes-list-card.active { background: var(--hermes-blue); border-color: var(--hermes-blue); color: #fff; }
-.hermes-list-card.active small, .hermes-list-card.active .progress-chip { color: #fff; }
-.hermes-list-card.active .progress-chip { border-color: rgba(255,255,255,.65); }
-.hermes-list-card.active .status-badge { background: #fff; color: #003DB3; }
-.hermes-list-icon { position: absolute; top: 16px; right: 17px; width: 30px; height: 30px; border: 1px solid var(--hermes-blue); border-radius: 9px; color: var(--hermes-blue); display: inline-flex; align-items: center; justify-content: center; }
-.hermes-list-icon svg { width: 19px; height: 19px; }
-.hermes-list-card.active .hermes-list-icon { color: #fff; border-color: rgba(255,255,255,.7); }
+.hermes-list-card { color: var(--ink); }
+.hermes-list-card.active { background: #fff; color: var(--ink); }
+.hermes-list-wrap .item-ai { pointer-events: none; }
 .hermes-tag { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; background: var(--hermes-blue); color: #fff; vertical-align: middle; }
 .hermes-list-badge { display: flex; align-items: center; gap: 6px; padding: 4px 0 2px; flex-wrap: wrap; }
 .hermes-group { border-top: 2px solid var(--hermes-blue); }

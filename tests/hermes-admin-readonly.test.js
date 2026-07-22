@@ -14,6 +14,13 @@ assert.match(admin, /getHermes\(b\)[\s\S]*hermes-list-card/, 'card só deve ser 
 assert.doesNotMatch(admin, /data-provider="hermes"/, 'Hermes não pode continuar como seletor interno do card nativo');
 assert.match(admin, /hermes\.cardTitle/, 'título do card deve vir da identidade visual cardTitle');
 assert.match(admin, /\$\{ICON_AI_HERMES\}/, 'card Hermes deve usar o ícone Hermes');
+const hermesCard = admin.slice(admin.indexOf('const hermesCard'), admin.indexOf('return nativeCard + hermesCard'));
+assert.match(hermesCard, /class="item-actions"/, 'card Hermes deve oferecer as mesmas ações do card nativo');
+assert.match(hermesCard, /data-edit-id=/, 'card Hermes deve permitir renomear');
+assert.match(hermesCard, /data-duplicate-id=/, 'card Hermes deve permitir duplicar');
+assert.match(hermesCard, /data-delete-id=/, 'card Hermes deve permitir excluir');
+assert.match(hermesCard, /class="item-ai"[\s\S]*class="ai-seg hermes-seg on"/, 'rodapé Hermes deve mostrar somente o ícone Hermes ativo');
+assert.doesNotMatch(hermesCard, /hermes-list-icon/, 'ícone Hermes não deve ocupar posição especial no topo');
 const aiNavigation = admin.slice(admin.indexOf('document.querySelectorAll("[data-ai-briefing]'), admin.indexOf('document.querySelectorAll("[data-hermes-id]'));
 assert.match(aiNavigation, /activeProvider\s*=\s*"native"/, 'clicar Claude ou GPT deve sair do painel Hermes');
 
@@ -56,6 +63,7 @@ assert.match(css, /\.hermes-markdown[\s\S]*table/);
 assert.match(css, /overflow-x:\s*auto/);
 assert.match(css, /@media \(max-width:\s*640px\)/);
 assert.match(css, /--hermes-blue:\s*#0057FF/i, 'direção visual deve usar o azul elétrico aprovado');
-assert.match(css, /\.hermes-list-card\.active[\s\S]*background:\s*var\(--hermes-blue\)[\s\S]*color:\s*#fff/i, 'card ativo deve ser azul com conteúdo branco');
+assert.match(css, /\.ai-seg\.hermes-seg\.on[\s\S]*background:\s*var\(--hermes-blue\)/i, 'somente o ícone Hermes ativo deve usar o azul elétrico');
+assert.doesNotMatch(css, /\.hermes-list-card\.active[^{]*\{[^}]*background:\s*var\(--hermes-blue\)/i, 'card Hermes ativo deve manter o mesmo fundo do card nativo');
 
 console.log('hermes admin readonly tests: ok');

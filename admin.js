@@ -695,14 +695,21 @@ function renderList() {
       return `
       <div class="briefing-item-wrap hermes-list-wrap">
         <button class="briefing-item hermes-list-card ${b.id === activeId && activeProvider === "hermes" ? "active" : ""}" type="button" data-hermes-id="${b.id}" aria-label="Abrir entrega automática Hermes de ${escapeHtml(hermes.cardTitle || hermes.brandName || b.client_name || "briefing")}">
-          <span class="hermes-list-icon" aria-hidden="true">${ICON_AI_HERMES}</span>
-          <small>Entrega automática · Hermes</small>
+          <small>${new Date(hermes.updatedAt || hermes.importedAt || b.created_at).toLocaleString("pt-BR")}</small>
           <strong>${escapeHtml(hermes.cardTitle || `${hermes.brandName || b.client_name} - Hermes`)}</strong>
           <span class="status-row">
             <span class="status-badge ${cardState.css}">${cardState.label}</span>
             <span class="progress-chip">${hp.done}/${hp.total}</span>
           </span>
         </button>
+        <div class="item-actions">
+          <button class="icon-button" type="button" data-edit-id="${b.id}" aria-label="Editar nome" data-tooltip="Renomear este briefing">${ICON_EDIT}</button>
+          <button class="icon-button" type="button" data-duplicate-id="${b.id}" aria-label="Duplicar" data-tooltip="Duplicar este briefing">${ICON_DUPLICATE}</button>
+          <button class="icon-button danger" type="button" data-delete-id="${b.id}" aria-label="Excluir" data-tooltip="Excluir este briefing (não pode ser desfeito)">${ICON_DELETE}</button>
+        </div>
+        <div class="item-ai">
+          <span class="ai-seg hermes-seg on" aria-label="Feito no Hermes" data-tooltip="Feito no Hermes">${ICON_AI_HERMES}</span>
+        </div>
       </div>`;
     })();
     return nativeCard + hermesCard;
