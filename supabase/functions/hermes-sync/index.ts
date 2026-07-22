@@ -64,6 +64,7 @@ function merge(existing: any, payload: any) {
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") return reply(405, { error: "method_not_allowed" });
+  if (Number(req.headers.get("content-length") || 0) > 5 * 1024 * 1024) return reply(413, { error: "payload_too_large" });
   const expected = Deno.env.get("HERMES_SYNC_SECRET") || "";
   const supplied = req.headers.get("x-hermes-secret") || "";
   if (!expected || !timingSafeEqual(expected, supplied)) return reply(401, { error: "unauthorized" });
@@ -73,19 +74,8 @@ Deno.serve(async (req) => {
 
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
   let briefingId = body.briefingId || payload.briefingId;
-  if (!briefingId) {
-    const { data, error: findError } = await supabase.from("briefings").select("id,client_name,result").limit(500);
-    if (findError) return reply(500, { error: "lookup_failed" });
-    const slugMatch = (data || []).filter(row => row.result?.hermes?.projectSlug === payload.projectSlug);
-    const identityTerms = payload.brandName.toLocaleLowerCase("pt-BR").split(/\s+/).filter((term: string) => term.length > 3).slice(0, 2);
-    const contentMatches = (data || []).filter(row => {
-      const searchable = JSON.stringify({ client_name: row.client_name, result: row.result }).toLocaleLowerCase("pt-BR");
-      return identityTerms.every((term: string) => searchable.includes(term));
-    });
-    const matches = slugMatch.length ? slugMatch : contentMatches;
-    if (matches.length !== 1) return reply(409, { error: "briefing_identity_not_unique", matches: matches.length });
-    briefingId = matches[0].id;
-  }
+  if (!briefingId) return reply(400, { error: "briefing_id_required" });
+  if (body.briefingId && payload.briefingId && body.briefingId !== payload.briefingId) return reply(409, { error: "briefing_identity_mismatch" });
   const { data: row, error: readError } = await supabase.from("briefings").select("id,result").eq("id", briefingId).single();
   if (readError || !row) return reply(404, { error: "briefing_not_found" });
   const current = row.result?.hermes || null;
