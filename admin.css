@@ -132,6 +132,7 @@ button { cursor: pointer; }
 .detail-header h2 { font: 700 clamp(26px, 2.6vw, 36px)/1.1 var(--sans); letter-spacing: -.02em; margin: 4px 0 8px; }
 .detail-meta { color: var(--muted); font-size: 12.5px; }
 .detail-toolbar { display: flex; gap: 10px; flex-wrap: wrap; }
+.hub-import-actions { margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
 
 .answers-grid { display: grid; gap: 16px; }
 .answers-grid .qa strong { display: block; font-size: 13.5px; margin-bottom: 5px; }
@@ -251,6 +252,28 @@ button { cursor: pointer; }
   .print-section p { margin: 0; font-size: 12.5px; line-height: 1.6; }
 }
 
+/* --- Hermes provider --- */
+.hermes-tag { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; background: #1a1a2e; color: #e0d7ff; vertical-align: middle; }
+.hermes-list-badge { display: flex; align-items: center; gap: 6px; padding: 4px 0 2px; flex-wrap: wrap; }
+.hermes-group { border-top: 2px solid #1a1a2e; }
+.hermes-group-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.hermes-group-title .hermes-tag { font-size: 11px; }
+.hermes-import-wrap { margin-left: auto; }
+.hermes-meta { font-size: 11px; color: var(--muted); margin: -6px 0 14px; }
+.hermes-content-box { background: var(--paper); border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px; margin-bottom: 10px; }
+.hermes-content-box .step-prompt-text { margin: 0; white-space: pre-wrap; font-size: 12.5px; line-height: 1.6; font-family: inherit; }
+.hermes-response { width: 100%; min-height: 220px; max-height: 520px; resize: vertical; border: 0; background: transparent; color: inherit; font: 12.5px/1.6 var(--sans); outline: none; }
+.hermes-notes { width: 100%; margin-bottom: 10px; }
+.hermes-card-actions { display: flex; gap: 8px; flex-wrap: wrap; padding: 12px 0 4px; border-top: 1px solid var(--line); margin-top: 12px; }
+.step-state-badge.state-aprovado_com_ressalvas { background: #fffbea; color: #92700a; }
+.step-state-badge.state-pronto_para_revisao { background: #eef4ff; color: #2255cc; }
+.step-state-badge.state-bloqueado { background: #fff0f0; color: #cc2222; }
+.step-state-badge.state-sem_conteudo { background: var(--surface); color: var(--muted); }
+.status-badge.status-aprovado { background: #e8f7ee; color: #1a7a3a; }
+.status-badge.status-ressalvas { background: #fffbea; color: #92700a; }
+.status-badge.status-bloqueado { background: #fff0f0; color: #cc2222; }
+.empty-state { color: var(--muted); font-size: 13px; padding: 16px 0; }
+
 @media (max-width: 900px) {
   .hub-body { grid-template-columns: 1fr; }
   .briefing-list { max-height: none; }
@@ -262,6 +285,7 @@ button { cursor: pointer; }
   .hub-body { padding: 16px 20px 0; }
   .briefing-detail { padding: 26px 20px; }
   .detail-toolbar { width: 100%; }
+  .hub-import-actions { width: 100%; margin-left: 0; justify-content: flex-start; }
 }
 
 @media (prefers-reduced-motion: reduce) {

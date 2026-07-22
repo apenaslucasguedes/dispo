@@ -8,7 +8,7 @@
   <link rel="icon" type="image/png" href="favcon-dispo-black.png" media="(prefers-color-scheme: light)">
   <link rel="icon" type="image/png" href="favcon-dispo-white.png" media="(prefers-color-scheme: dark)">
   <link rel="icon" type="image/png" href="favcon-dispo-black.png">
-  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="admin.css?v=hermes-20260722">
 </head>
 <body data-view="login">
   <div class="grain" aria-hidden="true"></div>
@@ -37,8 +37,12 @@
       <p class="eyebrow">Hub interno</p>
       <div class="hub-intro-row">
         <h1>Briefings recebidos</h1>
-        <button class="ghost-button" id="importButton" type="button">Importar briefing (.md)</button>
+        <div class="hub-import-actions">
+          <button class="ghost-button" id="importButton" type="button">Importar briefing (.md)</button>
+          <button class="ghost-button" id="hermesImportBtn" type="button" data-tooltip="Importar admin_payload.json no briefing selecionado">Importar Hermes</button>
+        </div>
         <input type="file" id="importFileInput" accept=".md,text/markdown" hidden>
+        <input type="file" id="hermesImportInput" accept=".json,application/json" hidden>
       </div>
     </div>
 
@@ -93,6 +97,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
-  <script src="admin.js"></script>
+  <script src="admin.js?v=hermes-20260722"></script>
 </body>
 </html>
