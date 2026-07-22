@@ -2,6 +2,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const cors = { "content-type": "application/json" };
 const allowedSteps = new Set(["h_entrada","h_brief","h_ferramenta","h_pesquisa","h_diagnostico","h_caminhos","h_auditorias","h_decisoes","h_verbal","h_criterios","h_direcao","h_handoff"]);
+const allowedStatuses = new Set(["sem_conteudo","rascunho","aprovado","aprovado_com_ressalvas","revisar","rejeitado","pulada","bloqueado","erro"]);
+const secretKey = /^(?:api[_-]?key|access[_-]?token|authorization|client[_-]?secret|password|private[_-]?key|secret|service[_-]?role)$/i;
+const secretValue = /-----BEGIN .*PRIVATE KEY-----|\beyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b|\b(?:sk-ant-|sk-|ghp_|github_pat_)[A-Za-z0-9_-]{16,}\b|SUPABASE_SERVICE_ROLE_KEY|\bservice_role\b/i;
 const reply = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: cors });
 
 function timingSafeEqual(a: string, b: string) {
@@ -12,12 +15,20 @@ function timingSafeEqual(a: string, b: string) {
 }
 
 function validate(payload: any) {
-  if (!payload || payload.provider !== "hermes" || !payload.projectSlug || !payload.brandName) return "invalid identity";
+  if (!payload || payload.provider !== "hermes" || !payload.projectSlug || !payload.brandName || payload.projectSlug.length > 240 || payload.brandName.length > 240 || String(payload.cardTitle || '').length > 240) return "invalid identity";
   if (!Array.isArray(payload.steps) || payload.steps.length < 1 || payload.steps.length > 12) return "invalid steps";
+  if (new Set(payload.steps.map((step: any) => step?.key)).size !== payload.steps.length) return "duplicate steps";
   for (const step of payload.steps) {
-    if (!allowedSteps.has(step.key) || typeof step.displayMarkdown !== "string" || !step.technicalMetadata) return `invalid step ${step?.key || "unknown"}`;
+    if (!allowedSteps.has(step.key) || typeof step.displayMarkdown !== "string" || step.displayMarkdown.length > 500000 || !step.technicalMetadata || typeof step.technicalMetadata !== "object" || Array.isArray(step.technicalMetadata) || !allowedStatuses.has(step.status || "rascunho")) return `invalid step ${step?.key || "unknown"}`;
   }
   return null;
+}
+
+function hasSecret(value: any, key = ""): boolean {
+  if (secretKey.test(key)) return true;
+  if (Array.isArray(value)) return value.some(item => hasSecret(item));
+  if (value && typeof value === "object") return Object.entries(value).some(([childKey, child]) => hasSecret(child, childKey));
+  return typeof value === "string" && secretValue.test(value);
 }
 
 function merge(existing: any, payload: any) {
@@ -58,6 +69,7 @@ Deno.serve(async (req) => {
   if (!expected || !timingSafeEqual(expected, supplied)) return reply(401, { error: "unauthorized" });
   let body: any; try { body = await req.json(); } catch { return reply(400, { error: "invalid_json" }); }
   const payload = body.payload || body; const error = validate(payload); if (error) return reply(400, { error });
+  if (hasSecret(payload)) return reply(400, { error: "payload_security_violation" });
 
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
   let briefingId = body.briefingId || payload.briefingId;
