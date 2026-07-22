@@ -1479,12 +1479,9 @@ const MAX_HERMES_PAYLOAD_BYTES = 5 * 1024 * 1024;
 const HERMES_IMPORT_STEP_STATES = new Set(["sem_conteudo", "rascunho", "aprovado", "aprovado_com_ressalvas", "revisar", "rejeitado", "pulada", "bloqueado", "erro"]);
 const HERMES_IMPORT_CARD_STATES = new Set(Object.keys(HERMES_CARD_STATES));
 
-function containsLikelySecret(value, key = "") {
-  if (/^(?:api[_-]?key|access[_-]?token|auth(?:orization)?|client[_-]?secret|password|passwd|private[_-]?key|secret|service[_-]?role)$/i.test(key)) return true;
-  if (Array.isArray(value)) return value.some(item => containsLikelySecret(item));
-  if (value && typeof value === "object") return Object.entries(value).some(([k, v]) => containsLikelySecret(v, k));
-  if (typeof value !== "string") return false;
-  return /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|\beyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b|\b(?:AKIA|ASIA)[A-Z0-9]{16}\b|\bAIza[0-9A-Za-z_-]{30,}\b|\b(?:sk|pk|ghp|github_pat|xox[baprs])[-_][A-Za-z0-9_-]{16,}\b|\b[A-Za-z0-9_+\/=.-]{48,}\b|SUPABASE_(?:ANON|SERVICE_ROLE)_KEY|service_role|https:\/\/[a-z0-9]+\.supabase\.co/i.test(value);
+// Compatibilidade com verificadores existentes; o diagnóstico detalhado vem do módulo dedicado.
+function containsLikelySecret(value) {
+  return !!HermesPayloadSecurity.findPayloadSecurityIssue(value);
 }
 
 function validateHermesPayload(payload, briefingId) {
@@ -1515,8 +1512,9 @@ async function importHermesPayload(file, b) {
   const validationError = validateHermesPayload(payload, b.id);
   if (validationError) { toast(`Payload Hermes inválido: ${validationError}`); return; }
 
-  if (containsLikelySecret(payload)) {
-    toast("Payload parece conter credenciais. Verifique o arquivo."); return;
+  const securityIssue = HermesPayloadSecurity.findPayloadSecurityIssue(payload);
+  if (securityIssue) {
+    toast(`Payload bloqueado no campo ${securityIssue.path} (${securityIssue.category}).`); return;
   }
 
   const existing = getHermes(b);
