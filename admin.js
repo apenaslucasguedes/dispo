@@ -24,6 +24,7 @@ const ICON_DUPLICATE = `<svg viewBox="0 0 20 20" fill="none" stroke="currentColo
 // Ícones das IAs de estratégia (toggle no card, sem texto)
 const ICON_AI_CLAUDE = `<svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 1.2l1.35 5.05L15.1 2.5l-2.05 4.55L18.8 5l-4.05 3.9 5.25 1.1-5.25 1.1L18.8 15l-5.75-1.55L15.1 18l-3.75-3.75L10 19.8l-1.35-5.55L4.9 18l2.05-4.55L1.2 15l4.05-3.9L0 10l5.25-1.1L1.2 5l5.75 2.05L4.9 2.5l3.75 3.75z"/></svg>`;
 const ICON_AI_GPT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)"/></svg>`;
+const ICON_AI_HERMES = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 7c2.5 0 4.5 2 4.5 4.5V13M19 7c-2.5 0-4.5 2-4.5 4.5V13M7 17h10"/></svg>`;
 
 // IAs de estratégia (uma por briefing) e ferramentas de imagem (uma por unidade)
 const STRATEGY_AIS = [
@@ -669,10 +670,12 @@ function renderList() {
     const activeAi = getPipeline(b).aiTool;
     const aiToggle = STRATEGY_AIS.map(a =>
       `<button class="ai-seg ${activeAi === a.id ? "on" : ""}" type="button" data-ai="${a.id}" data-ai-briefing="${b.id}" aria-label="Marcar ${a.label}" data-tooltip="Feito no ${a.label}">${a.icon}</button>`
-    ).join("");
+    ).join("") + (getHermes(b)
+      ? `<button class="ai-seg hermes-seg ${b.id === activeId && activeProvider === "hermes" ? "on" : ""}" type="button" data-provider="hermes" data-provider-briefing="${b.id}" aria-label="Ver resultado Hermes" data-tooltip="Ver entrega automática do Hermes">${ICON_AI_HERMES}</button>`
+      : "");
     const nativeCard = `
     <div class="briefing-item-wrap">
-      <button class="briefing-item ${b.id === activeId && activeProvider === "native" ? "active" : ""}" data-id="${b.id}">
+      <button class="briefing-item ${b.id === activeId ? "active" : ""}" data-id="${b.id}">
         <small>${new Date(b.created_at).toLocaleString("pt-BR")}</small>
         <strong>${escapeHtml(b.client_name || "Briefing sem nome")}</strong>
         <span class="status-row">
@@ -687,28 +690,12 @@ function renderList() {
       </div>
       <div class="item-ai">${aiToggle}</div>
     </div>`;
-    const h = getHermes(b);
-    if (!h) return nativeCard;
-    const hp = hermesProgress(b);
-    const hs = HERMES_CARD_STATES[h.status] || HERMES_CARD_STATES.recebido;
-    const hermesCard = `
-    <div class="briefing-item-wrap hermes-list-card">
-      <button class="briefing-item ${b.id === activeId && activeProvider === "hermes" ? "active" : ""}" data-hermes-id="${b.id}">
-        <small>${new Date(h.updatedAt || h.importedAt || b.created_at).toLocaleString("pt-BR")}</small>
-        <strong>${escapeHtml(h.cardTitle || `${h.brandName || b.client_name} - Hermes`)}</strong>
-        <span class="status-row">
-          <span class="hermes-tag">HERMES</span>
-          <span class="status-badge ${hs.css}">${hs.label}</span>
-          <span class="progress-chip">${hp.done}/${hp.total}</span>
-        </span>
-      </button>
-    </div>`;
-    return nativeCard + hermesCard;
+    return nativeCard;
   }).join("") || `<p class="empty-state">Nenhum briefing recebido ainda.</p>`;
 
   document.querySelectorAll(".briefing-item").forEach(el => el.addEventListener("click", () => {
-    activeId = el.dataset.id || el.dataset.hermesId;
-    activeProvider = el.dataset.hermesId ? "hermes" : "native";
+    activeId = el.dataset.id;
+    activeProvider = "native";
     renderList();
     renderDetail();
   }));
@@ -723,6 +710,13 @@ function renderList() {
   }));
   document.querySelectorAll("[data-ai-briefing]").forEach(btn => btn.addEventListener("click", e => {
     e.stopPropagation(); setStrategyAi(btn.dataset.aiBriefing, btn.dataset.ai);
+  }));
+  document.querySelectorAll("[data-provider-briefing]").forEach(btn => btn.addEventListener("click", e => {
+    e.stopPropagation();
+    activeId = btn.dataset.providerBriefing;
+    activeProvider = "hermes";
+    renderList();
+    renderDetail();
   }));
 }
 
@@ -1003,10 +997,17 @@ function bindHermesDetailListeners(b, detail) {
     if (openHermesSteps.has(k)) openHermesSteps.delete(k); else openHermesSteps.add(k);
     renderDetail();
   }));
-  detail.querySelectorAll("[data-hermes-state]").forEach(btn => btn.addEventListener("click", () =>
-    saveHermesStep(b, btn.dataset.hstep, btn.dataset.hermesState)));
-  detail.querySelectorAll("[data-hermes-card-state]").forEach(btn => btn.addEventListener("click", () =>
-    setHermesCardStatus(b, btn.dataset.hermesCardState)));
+  detail.querySelectorAll("[data-copy-hermes]").forEach(btn => btn.addEventListener("click", e => {
+    e.stopPropagation();
+    const stepData = ((getHermes(b) || {}).steps || {})[btn.dataset.copyHermes] || {};
+    copyText(hermesStepMarkdown(stepData), "Etapa Hermes");
+  }));
+  detail.querySelectorAll("[data-toggle-hermes-markdown]").forEach(btn => btn.addEventListener("click", e => {
+    e.stopPropagation();
+    const key = btn.dataset.toggleHermesMarkdown;
+    if (rawHermesSteps.has(key)) rawHermesSteps.delete(key); else rawHermesSteps.add(key);
+    renderDetail();
+  }));
 }
 
 function renderDetail() {
@@ -1332,12 +1333,12 @@ const HERMES_STEPS = [
 ];
 
 const HERMES_CARD_STATES = {
-  recebido:              { label: "Recebido",             css: "status-recebido"    },
+  recebido:              { label: "Em processamento",     css: "status-processando" },
   em_processamento:      { label: "Em processamento",     css: "status-processando" },
   pronto_para_revisao:   { label: "Pronto para revisão",  css: "status-pronto"      },
-  aprovado:              { label: "Aprovado",             css: "status-aprovado"    },
-  aprovado_com_ressalvas:{ label: "Aprovado c/ ressalvas",css: "status-ressalvas"   },
-  bloqueado:             { label: "Bloqueado",            css: "status-bloqueado"   },
+  aprovado:              { label: "Pronto para revisão",  css: "status-pronto"      },
+  aprovado_com_ressalvas:{ label: "Pronto para revisão",  css: "status-pronto"      },
+  bloqueado:             { label: "Erro",                 css: "status-erro"        },
   erro:                  { label: "Erro",                 css: "status-erro"        },
 };
 
@@ -1378,8 +1379,8 @@ function hermesProgress(b) {
   if (!h) return null;
   const steps = h.steps || {};
   const done = HERMES_STEPS.filter(s => {
-    const st = steps[s.key] && steps[s.key].status;
-    return st === "aprovado" || st === "aprovado_com_ressalvas";
+    const content = hermesStepMarkdown(steps[s.key] || {});
+    return content.trim().length > 0;
   }).length;
   return { done, total: HERMES_STEPS.length };
 }
@@ -1398,6 +1399,21 @@ function hermesListBadge(b) {
 
 // Conjunto de etapas Hermes abertas no painel (separado do pipeline nativo)
 const openHermesSteps = new Set();
+const rawHermesSteps = new Set();
+
+function hermesStepMarkdown(stepData) {
+  return String(stepData.displayMarkdown || stepData.editedMarkdown || stepData.generatedMarkdown || stepData.content || "");
+}
+
+function renderHermesMarkdown(markdown) {
+  if (!window.marked || !window.DOMPurify) return `<pre class="hermes-markdown-raw"><code>${escapeHtml(markdown)}</code></pre>`;
+  const rendered = window.marked.parse(markdown, { gfm: true, breaks: false });
+  return window.DOMPurify.sanitize(rendered, {
+    USE_PROFILES: { html: true },
+    FORBID_TAGS: ["style", "script", "iframe", "object", "embed", "form", "input", "button", "img", "svg", "math"],
+    FORBID_ATTR: ["style"],
+  });
+}
 
 function hermesStepCard(b, step) {
   const h = getHermes(b) || {};
@@ -1405,24 +1421,17 @@ function hermesStepCard(b, step) {
   const state = HERMES_STEP_STATES[stepData.status] || HERMES_STEP_STATES.sem_conteudo;
   const isOpen = openHermesSteps.has(step.key);
 
+  const markdown = hermesStepMarkdown(stepData);
+  const showRaw = rawHermesSteps.has(step.key);
   const body = !isOpen ? "" : `
     ${stepData.newVersionAvailable ? `<p class="hermes-version-alert">Nova versão disponível. Sua edição foi preservada.</p>` : ""}
     <div class="hermes-content-box">
-      <textarea class="hermes-response" data-hstep="${step.key}" aria-label="Resposta da IA — ${escapeHtml(step.title)}">${escapeHtml(stepData.displayMarkdown || stepData.editedMarkdown || stepData.generatedMarkdown || stepData.content || "")}</textarea>
+      ${showRaw
+        ? `<pre class="hermes-markdown-raw"><code>${escapeHtml(markdown)}</code></pre>`
+        : `<div class="hermes-markdown">${renderHermesMarkdown(markdown)}</div>`}
     </div>
     ${stepData.technicalMetadata ? `<details class="hermes-technical"><summary>Detalhes técnicos</summary><pre>${escapeHtml(JSON.stringify(stepData.technicalMetadata, null, 2))}</pre></details>` : ""}
-    <label class="step-notes-label">Nota do revisor (opcional)
-      <input class="hermes-notes" data-hstep="${step.key}" type="text" value="${escapeHtml(stepData.notes || "")}" placeholder="Observação, ajuste, ressalva...">
-    </label>
-    <div class="step-actions">
-      <button class="approve-button icon-label" type="button" data-hermes-state="aprovado" data-hstep="${step.key}" data-tooltip="Aprovar esta etapa Hermes (decisão humana)">${ICON_CHECK}<span>Aprovar</span></button>
-      <button class="ghost-button icon-label" type="button" data-hermes-state="aprovado_com_ressalvas" data-hstep="${step.key}" data-tooltip="Aprovar com ressalvas">${ICON_FLAG}<span>Ressalvas</span></button>
-      <button class="ghost-button icon-label" type="button" data-hermes-state="rascunho" data-hstep="${step.key}" data-tooltip="Salvar resposta e nota como rascunho">${ICON_DRAFT}<span>Salvar rascunho</span></button>
-      <button class="ghost-button icon-label" type="button" data-hermes-state="revisar" data-hstep="${step.key}">${ICON_FLAG}<span>Revisar</span></button>
-      <button class="text-button icon-label danger" type="button" data-hermes-state="rejeitado" data-hstep="${step.key}">${ICON_REJECT}<span>Rejeitar</span></button>
-      <button class="ghost-button icon-label" type="button" data-hermes-state="pulada" data-hstep="${step.key}">${ICON_SKIP}<span>Pular</span></button>
-      <button class="text-button icon-label danger" type="button" data-hermes-state="bloqueado" data-hstep="${step.key}" data-tooltip="Marcar como bloqueado">${ICON_REJECT}<span>Bloquear</span></button>
-    </div>`;
+    `;
 
   return `
     <div class="step-card ${state.css}">
@@ -1433,6 +1442,10 @@ function hermesStepCard(b, step) {
           <span class="step-title">${escapeHtml(step.title)}</span>
           <span class="step-state-badge ${state.css}" data-tooltip="${state.label}">${state.label}</span>
         </button>
+        <div class="hermes-step-tools">
+          <button class="copy-button" type="button" data-copy-hermes="${step.key}">Copiar</button>
+          <button class="copy-button" type="button" data-toggle-hermes-markdown="${step.key}">${showRaw ? "Ver formatado" : "Ver Markdown"}</button>
+        </div>
       </div>
       <div class="step-body">${body}</div>
     </div>`;
@@ -1443,17 +1456,6 @@ function hermesDetailBlock(b) {
   const pr = hermesProgress(b);
   const cs = h ? (HERMES_CARD_STATES[h.status] || HERMES_CARD_STATES.recebido) : null;
 
-  const cardActions = h ? `
-    <div class="hermes-card-actions">
-      <button class="ghost-button" type="button" data-hermes-card-state="recebido">Recebido</button>
-      <button class="ghost-button" type="button" data-hermes-card-state="em_processamento">Em processamento</button>
-      <button class="ghost-button" type="button" data-hermes-card-state="pronto_para_revisao" data-tooltip="Marcar como pronto para revisão humana">Pronto p/ revisão</button>
-      <button class="approve-button icon-label" type="button" data-hermes-card-state="aprovado" data-tooltip="Aprovar este card Hermes — decisão humana registrada aqui">${ICON_CHECK}<span>Aprovar card</span></button>
-      <button class="ghost-button" type="button" data-hermes-card-state="aprovado_com_ressalvas" data-tooltip="Aprovar com ressalvas">Ressalvas</button>
-      <button class="text-button danger" type="button" data-hermes-card-state="bloqueado" data-tooltip="Bloquear este card">Bloquear</button>
-      <button class="text-button danger" type="button" data-hermes-card-state="erro" data-tooltip="Marcar como erro">Erro</button>
-    </div>` : "";
-
   return `
     <div class="pipeline-group hermes-group">
       <h3 class="pipeline-group-title hermes-group-title">
@@ -1463,9 +1465,8 @@ function hermesDetailBlock(b) {
         ${cs ? `<span class="status-badge ${cs.css}">${cs.label}</span>` : ""}
       </h3>
       ${h ? `
-        <p class="hermes-meta">${h.updatedAt ? `Atualizado em ${new Date(h.updatedAt).toLocaleString("pt-BR")}` : ""}</p>
+        <p class="hermes-sync-notice">Conteúdo sincronizado automaticamente e pronto para revisão. ${h.updatedAt ? `Última atualização: ${new Date(h.updatedAt).toLocaleString("pt-BR")}.` : ""}</p>
         ${HERMES_STEPS.map(s => hermesStepCard(b, s)).join("")}
-        ${cardActions}
       ` : `
         <p class="empty-state">Nenhum payload Hermes importado. Use "Importar Hermes" para carregar o <code>admin_payload.json</code> gerado pelo adaptador no Método Branding.</p>
         <p style="font-size:12px;color:var(--muted);margin-top:8px;">Comando: <code>node scripts/hermes-publish.js &lt;slug&gt;</code> em Metodo Branding</p>
@@ -1568,54 +1569,5 @@ async function importHermesPayload(file, b) {
     openHermesSteps.clear();
     activeProvider = "hermes";
     await loadBriefings();
-  }
-}
-
-async function saveHermesStep(b, key, status) {
-  const existingHermes = getHermes(b);
-  const expectedUpdatedAt = (existingHermes || {}).updatedAt || "__absent__";
-  const h = existingHermes ? structuredClone(existingHermes) : { steps: {}, status: "em_processamento", provider: "hermes" };
-  h.steps = h.steps || {};
-  const note = document.querySelector(`.hermes-notes[data-hstep="${key}"]`);
-  const notes = note ? note.value : ((h.steps[key] || {}).notes || "");
-  const response = document.querySelector(`.hermes-response[data-hstep="${key}"]`);
-  const previous = h.steps[key] || {};
-  const editedMarkdown = response ? response.value : (previous.displayMarkdown || previous.content || "");
-  const next = {
-    ...previous,
-    status, notes, editedMarkdown, displayMarkdown: editedMarkdown, content: editedMarkdown,
-    hasHumanEdit: editedMarkdown !== (previous.generatedMarkdown || ""),
-    newVersionAvailable: false,
-    updatedAt: nowIso(),
-    history: [...(previous.history || []), { action: "manual", from: previous.status || null, to: status, notes, at: nowIso() }],
-    ...(["aprovado", "aprovado_com_ressalvas"].includes(status) ? { approvedAt: nowIso() } : {}),
-  };
-  if (!["aprovado", "aprovado_com_ressalvas"].includes(status)) delete next.approvedAt;
-  h.steps[key] = next;
-  h.updatedAt = nowIso();
-  if (await saveHermes(b, h, expectedUpdatedAt)) {
-    toast(`Hermes etapa ${key}: ${(HERMES_STEP_STATES[status] || {}).label || status}`);
-    openHermesSteps.delete(key);
-    const keys = HERMES_STEPS.map(s => s.key);
-    const i = keys.indexOf(key);
-    if (i >= 0 && i + 1 < keys.length) openHermesSteps.add(keys[i + 1]);
-    await loadBriefings();
-  }
-}
-
-async function setHermesCardStatus(b, status) {
-  const existingHermes = getHermes(b);
-  const expectedUpdatedAt = (existingHermes || {}).updatedAt || "__absent__";
-  const h = existingHermes ? structuredClone(existingHermes) : { steps: {}, provider: "hermes" };
-  const previousStatus = h.status || null;
-  h.status = status;
-  h.updatedAt = nowIso();
-  h.history = [...(h.history || []), { action: "card_status", from: previousStatus, to: status, at: nowIso() }];
-  if (["aprovado", "aprovado_com_ressalvas"].includes(status)) h.approvedAt = nowIso();
-  else delete h.approvedAt;
-  if (await saveHermes(b, h, expectedUpdatedAt)) {
-    toast(`Hermes: ${(HERMES_CARD_STATES[status] || {}).label || status}`);
-    await loadBriefings();
-    renderDetail();
   }
 }

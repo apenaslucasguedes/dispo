@@ -8,7 +8,7 @@
   <link rel="icon" type="image/png" href="favcon-dispo-black.png" media="(prefers-color-scheme: light)">
   <link rel="icon" type="image/png" href="favcon-dispo-white.png" media="(prefers-color-scheme: dark)">
   <link rel="icon" type="image/png" href="favcon-dispo-black.png">
-  <link rel="stylesheet" href="admin.css?v=hermes-editorial-sync1">
+  <link rel="stylesheet" href="admin.css?v=hermes-readonly2">
 </head>
 <body data-view="login">
   <div class="grain" aria-hidden="true"></div>
@@ -39,10 +39,8 @@
         <h1>Briefings recebidos</h1>
         <div class="hub-import-actions">
           <button class="ghost-button" id="importButton" type="button">Importar briefing (.md)</button>
-          <button class="ghost-button" id="hermesImportBtn" type="button" data-tooltip="Importar admin_payload.json no briefing selecionado">Importar Hermes</button>
         </div>
         <input type="file" id="importFileInput" accept=".md,text/markdown" hidden>
-        <input type="file" id="hermesImportInput" accept=".json,application/json" hidden>
       </div>
     </div>
 
@@ -52,6 +50,14 @@
         <p class="empty-state">Selecione um briefing na lista ao lado.</p>
       </main>
     </div>
+    <details class="manual-recovery">
+      <summary>Recuperação manual</summary>
+      <div class="manual-recovery-body">
+        <p>Use somente para recuperar uma sincronização que não apareceu automaticamente.</p>
+        <button class="ghost-button" id="hermesImportBtn" type="button">Importar payload Hermes</button>
+        <input type="file" id="hermesImportInput" accept=".json,application/json" hidden>
+      </div>
+    </details>
   </section>
 
   <div id="printArea" class="print-area" aria-hidden="true"></div>
@@ -96,8 +102,10 @@
   <div class="toast" id="toast" role="status"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked@15.0.12/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js"></script>
   <script src="supabase-config.js"></script>
   <script src="hermes-security.js?v=20260722-security2"></script>
-  <script src="admin.js?v=hermes-editorial-sync1"></script>
+  <script src="admin.js?v=hermes-readonly2"></script>
 </body>
 </html>
