@@ -670,12 +670,10 @@ function renderList() {
     const activeAi = getPipeline(b).aiTool;
     const aiToggle = STRATEGY_AIS.map(a =>
       `<button class="ai-seg ${activeAi === a.id ? "on" : ""}" type="button" data-ai="${a.id}" data-ai-briefing="${b.id}" aria-label="Marcar ${a.label}" data-tooltip="Feito no ${a.label}">${a.icon}</button>`
-    ).join("") + (getHermes(b)
-      ? `<button class="ai-seg hermes-seg ${b.id === activeId && activeProvider === "hermes" ? "on" : ""}" type="button" data-provider="hermes" data-provider-briefing="${b.id}" aria-label="Ver resultado Hermes" data-tooltip="Ver entrega automática do Hermes">${ICON_AI_HERMES}</button>`
-      : "");
+    ).join("");
     const nativeCard = `
     <div class="briefing-item-wrap">
-      <button class="briefing-item ${b.id === activeId ? "active" : ""}" data-id="${b.id}">
+      <button class="briefing-item ${b.id === activeId && activeProvider === "native" ? "active" : ""}" data-id="${b.id}">
         <small>${new Date(b.created_at).toLocaleString("pt-BR")}</small>
         <strong>${escapeHtml(b.client_name || "Briefing sem nome")}</strong>
         <span class="status-row">
@@ -690,10 +688,27 @@ function renderList() {
       </div>
       <div class="item-ai">${aiToggle}</div>
     </div>`;
-    return nativeCard;
+    const hermes = getHermes(b);
+    const hermesCard = !hermes ? "" : (() => {
+      const hp = hermesProgress(b);
+      const cardState = HERMES_CARD_STATES[hermes.status] || HERMES_CARD_STATES.recebido;
+      return `
+      <div class="briefing-item-wrap hermes-list-wrap">
+        <button class="briefing-item hermes-list-card ${b.id === activeId && activeProvider === "hermes" ? "active" : ""}" type="button" data-hermes-id="${b.id}" aria-label="Abrir entrega automática Hermes de ${escapeHtml(hermes.cardTitle || hermes.brandName || b.client_name || "briefing")}">
+          <span class="hermes-list-icon" aria-hidden="true">${ICON_AI_HERMES}</span>
+          <small>Entrega automática · Hermes</small>
+          <strong>${escapeHtml(hermes.cardTitle || `${hermes.brandName || b.client_name} - Hermes`)}</strong>
+          <span class="status-row">
+            <span class="status-badge ${cardState.css}">${cardState.label}</span>
+            <span class="progress-chip">${hp.done}/${hp.total}</span>
+          </span>
+        </button>
+      </div>`;
+    })();
+    return nativeCard + hermesCard;
   }).join("") || `<p class="empty-state">Nenhum briefing recebido ainda.</p>`;
 
-  document.querySelectorAll(".briefing-item").forEach(el => el.addEventListener("click", () => {
+  document.querySelectorAll(".briefing-item[data-id]").forEach(el => el.addEventListener("click", () => {
     activeId = el.dataset.id;
     activeProvider = "native";
     renderList();
@@ -709,11 +724,13 @@ function renderList() {
     e.stopPropagation(); deleteBriefing(btn.dataset.deleteId);
   }));
   document.querySelectorAll("[data-ai-briefing]").forEach(btn => btn.addEventListener("click", e => {
-    e.stopPropagation(); setStrategyAi(btn.dataset.aiBriefing, btn.dataset.ai);
-  }));
-  document.querySelectorAll("[data-provider-briefing]").forEach(btn => btn.addEventListener("click", e => {
     e.stopPropagation();
-    activeId = btn.dataset.providerBriefing;
+    activeId = btn.dataset.aiBriefing;
+    activeProvider = "native";
+    setStrategyAi(btn.dataset.aiBriefing, btn.dataset.ai);
+  }));
+  document.querySelectorAll("[data-hermes-id]").forEach(btn => btn.addEventListener("click", () => {
+    activeId = btn.dataset.hermesId;
     activeProvider = "hermes";
     renderList();
     renderDetail();
@@ -1007,6 +1024,10 @@ function bindHermesDetailListeners(b, detail) {
     const key = btn.dataset.toggleHermesMarkdown;
     if (rawHermesSteps.has(key)) rawHermesSteps.delete(key); else rawHermesSteps.add(key);
     renderDetail();
+  }));
+  detail.querySelectorAll("[data-save-hermes-note]").forEach(btn => btn.addEventListener("click", e => {
+    e.stopPropagation();
+    saveHermesNote(b, btn.dataset.saveHermesNote);
   }));
 }
 
@@ -1430,6 +1451,12 @@ function hermesStepCard(b, step) {
         ? `<pre class="hermes-markdown-raw"><code>${escapeHtml(markdown)}</code></pre>`
         : `<div class="hermes-markdown">${renderHermesMarkdown(markdown)}</div>`}
     </div>
+    <label class="hermes-notes-label">Observação opcional
+      <textarea rows="3" maxlength="4000" data-hermes-notes="${step.key}" placeholder="Adendos, dúvidas ou comentários sobre este conteúdo...">${escapeHtml(stepData.notes || "")}</textarea>
+    </label>
+    <div class="hermes-note-actions">
+      <button class="ghost-button" type="button" data-save-hermes-note="${step.key}">Salvar observação</button>
+    </div>
     ${stepData.technicalMetadata ? `<details class="hermes-technical"><summary>Detalhes técnicos</summary><pre>${escapeHtml(JSON.stringify(stepData.technicalMetadata, null, 2))}</pre></details>` : ""}
     `;
 
@@ -1449,6 +1476,23 @@ function hermesStepCard(b, step) {
       </div>
       <div class="step-body">${body}</div>
     </div>`;
+}
+
+async function saveHermesNote(b, stepKey) {
+  const existingHermes = getHermes(b);
+  const textarea = document.querySelector(`[data-hermes-notes="${stepKey}"]`);
+  if (!existingHermes || !textarea || !existingHermes.steps?.[stepKey]) return;
+
+  const expectedUpdatedAt = existingHermes.updatedAt || "__absent__";
+  const hermes = structuredClone(existingHermes);
+  const step = hermes.steps[stepKey];
+  step.notes = textarea.value.trim();
+  hermes.updatedAt = nowIso();
+
+  if (await saveHermes(b, hermes, expectedUpdatedAt)) {
+    toast("Observação salva");
+    await loadBriefings();
+  }
 }
 
 function hermesDetailBlock(b) {

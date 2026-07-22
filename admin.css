@@ -254,13 +254,23 @@ button { cursor: pointer; }
 }
 
 /* --- Hermes provider --- */
-.hermes-tag { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; background: #1a1a2e; color: #e0d7ff; vertical-align: middle; }
+:root { --hermes-blue: #0057FF; --hermes-blue-soft: #EAF1FF; --hermes-blue-border: #8CB4FF; }
+.hermes-list-card { min-height: 112px; padding-right: 64px; border-color: var(--hermes-blue); color: var(--ink); }
+.hermes-list-card:hover { border-color: var(--hermes-blue); box-shadow: 0 0 0 1px var(--hermes-blue); }
+.hermes-list-card.active { background: var(--hermes-blue); border-color: var(--hermes-blue); color: #fff; }
+.hermes-list-card.active small, .hermes-list-card.active .progress-chip { color: #fff; }
+.hermes-list-card.active .progress-chip { border-color: rgba(255,255,255,.65); }
+.hermes-list-card.active .status-badge { background: #fff; color: #003DB3; }
+.hermes-list-icon { position: absolute; top: 16px; right: 17px; width: 30px; height: 30px; border: 1px solid var(--hermes-blue); border-radius: 9px; color: var(--hermes-blue); display: inline-flex; align-items: center; justify-content: center; }
+.hermes-list-icon svg { width: 19px; height: 19px; }
+.hermes-list-card.active .hermes-list-icon { color: #fff; border-color: rgba(255,255,255,.7); }
+.hermes-tag { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; background: var(--hermes-blue); color: #fff; vertical-align: middle; }
 .hermes-list-badge { display: flex; align-items: center; gap: 6px; padding: 4px 0 2px; flex-wrap: wrap; }
-.hermes-group { border-top: 2px solid #1a1a2e; }
+.hermes-group { border-top: 2px solid var(--hermes-blue); }
 .hermes-group-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .hermes-group-title .hermes-tag { font-size: 11px; }
 .hermes-import-wrap { margin-left: auto; }
-.hermes-sync-notice { font-size: 12.5px; line-height: 1.5; color: #354b32; background: #eef5ec; border: 1px solid #cfe3cc; border-radius: 10px; padding: 11px 14px; margin: -4px 0 18px; }
+.hermes-sync-notice { font-size: 12.5px; line-height: 1.5; color: #00358f; background: var(--hermes-blue-soft); border: 1px solid var(--hermes-blue-border); border-radius: 10px; padding: 11px 14px; margin: -4px 0 18px; }
 .hermes-content-box { background: #fff; border-top: 1px solid var(--line); padding: 18px 2px 4px; margin-bottom: 10px; }
 .hermes-step-tools { flex-shrink: 0; display: flex; align-items: center; gap: 6px; padding-right: 12px; }
 .hermes-markdown { color: #26241f; font-size: 14px; line-height: 1.68; overflow-wrap: anywhere; }
@@ -285,6 +295,12 @@ button { cursor: pointer; }
 .hermes-technical { margin: 8px 0 12px; color: var(--muted); font-size: 12px; }
 .hermes-technical summary { cursor: pointer; font-weight: 650; }
 .hermes-technical pre { overflow: auto; max-height: 240px; padding: 10px; border: 1px solid var(--line); border-radius: 6px; white-space: pre-wrap; }
+.hermes-notes-label { display: block; color: #20345d; font-size: 12px; font-weight: 650; margin: 14px 0 0; }
+.hermes-notes-label textarea { display: block; width: 100%; margin-top: 7px; padding: 11px 13px; border: 1px solid var(--hermes-blue-border); border-radius: 10px; background: #fff; color: var(--ink); outline: none; resize: vertical; font: inherit; font-weight: 400; line-height: 1.5; }
+.hermes-notes-label textarea:focus { border-color: var(--hermes-blue); box-shadow: 0 0 0 2px rgba(0,87,255,.14); }
+.hermes-note-actions { display: flex; justify-content: flex-end; margin: 8px 0 14px; }
+.hermes-note-actions .ghost-button { border-color: var(--hermes-blue); color: var(--hermes-blue); }
+.hermes-note-actions .ghost-button:hover { background: var(--hermes-blue); color: #fff; }
 .hermes-card-actions { display: flex; gap: 8px; flex-wrap: wrap; padding: 12px 0 4px; border-top: 1px solid var(--line); margin-top: 12px; }
 .step-state-badge.state-aprovado_com_ressalvas { background: #fffbea; color: #92700a; }
 .step-state-badge.state-pronto_para_revisao { background: #eef4ff; color: #2255cc; }
