@@ -264,6 +264,10 @@ button { cursor: pointer; }
 .hermes-content-box .step-prompt-text { margin: 0; white-space: pre-wrap; font-size: 12.5px; line-height: 1.6; font-family: inherit; }
 .hermes-response { width: 100%; min-height: 220px; max-height: 520px; resize: vertical; border: 0; background: transparent; color: inherit; font: 12.5px/1.6 var(--sans); outline: none; }
 .hermes-notes { width: 100%; margin-bottom: 10px; }
+.hermes-version-alert { margin: 0 0 10px; padding: 8px 10px; border-radius: 6px; background: #fff7d6; color: #765600; font-size: 12px; font-weight: 650; }
+.hermes-technical { margin: 8px 0 12px; color: var(--muted); font-size: 12px; }
+.hermes-technical summary { cursor: pointer; font-weight: 650; }
+.hermes-technical pre { overflow: auto; max-height: 240px; padding: 10px; border: 1px solid var(--line); border-radius: 6px; white-space: pre-wrap; }
 .hermes-card-actions { display: flex; gap: 8px; flex-wrap: wrap; padding: 12px 0 4px; border-top: 1px solid var(--line); margin-top: 12px; }
 .step-state-badge.state-aprovado_com_ressalvas { background: #fffbea; color: #92700a; }
 .step-state-badge.state-pronto_para_revisao { background: #eef4ff; color: #2255cc; }

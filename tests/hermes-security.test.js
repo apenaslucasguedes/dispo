@@ -58,3 +58,19 @@ const nested = findPayloadSecurityIssue({ steps: [{ artifacts: ['ok'], content: 
 assert.deepEqual(nested, { path: '$.steps[0].content', ruleId: 'github-token', category: 'provider-api-token' });
 
 console.log('hermes-security tests: ok');
+
+const fs = require('node:fs');
+const path = require('node:path');
+const edge = fs.readFileSync(path.join(__dirname, '../supabase/functions/hermes-sync/index.ts'), 'utf8');
+assert.match(edge, /HERMES_SYNC_SECRET/);
+assert.match(edge, /timingSafeEqual/);
+assert.match(edge, /upsert_briefing_hermes/);
+assert.match(edge, /project_identity_mismatch/);
+assert.match(edge, /lastIdempotencyKey/);
+assert.doesNotMatch(edge, /console\.(?:log|error).*secret/i);
+
+const admin = fs.readFileSync(path.join(__dirname, '../admin.js'), 'utf8');
+assert.match(admin, /displayMarkdown/);
+assert.match(admin, /Detalhes técnicos/);
+assert.match(admin, /Nova versão disponível/);
+assert.match(admin, /editedMarkdown/);

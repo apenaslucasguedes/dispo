@@ -1401,14 +1401,16 @@ const openHermesSteps = new Set();
 
 function hermesStepCard(b, step) {
   const h = getHermes(b) || {};
-  const stepData = (h.steps || {})[step.key] || { status: "sem_conteudo", content: "", notes: "" };
+  const stepData = (h.steps || {})[step.key] || { status: "sem_conteudo", displayMarkdown: "", notes: "" };
   const state = HERMES_STEP_STATES[stepData.status] || HERMES_STEP_STATES.sem_conteudo;
   const isOpen = openHermesSteps.has(step.key);
 
   const body = !isOpen ? "" : `
+    ${stepData.newVersionAvailable ? `<p class="hermes-version-alert">Nova versão disponível. Sua edição foi preservada.</p>` : ""}
     <div class="hermes-content-box">
-      <textarea class="hermes-response" data-hstep="${step.key}" aria-label="Resposta da IA — ${escapeHtml(step.title)}">${escapeHtml(stepData.content || "")}</textarea>
+      <textarea class="hermes-response" data-hstep="${step.key}" aria-label="Resposta da IA — ${escapeHtml(step.title)}">${escapeHtml(stepData.displayMarkdown || stepData.editedMarkdown || stepData.generatedMarkdown || stepData.content || "")}</textarea>
     </div>
+    ${stepData.technicalMetadata ? `<details class="hermes-technical"><summary>Detalhes técnicos</summary><pre>${escapeHtml(JSON.stringify(stepData.technicalMetadata, null, 2))}</pre></details>` : ""}
     <label class="step-notes-label">Nota do revisor (opcional)
       <input class="hermes-notes" data-hstep="${step.key}" type="text" value="${escapeHtml(stepData.notes || "")}" placeholder="Observação, ajuste, ressalva...">
     </label>
@@ -1461,11 +1463,7 @@ function hermesDetailBlock(b) {
         ${cs ? `<span class="status-badge ${cs.css}">${cs.label}</span>` : ""}
       </h3>
       ${h ? `
-        <p class="hermes-meta">
-          Projeto: <code>${escapeHtml(h.projectSlug || "")}</code>
-          ${h.importedAt ? ` · Importado em ${new Date(h.importedAt).toLocaleString("pt-BR")}` : ""}
-          ${h.updatedAt ? ` · Atualizado em ${new Date(h.updatedAt).toLocaleString("pt-BR")}` : ""}
-        </p>
+        <p class="hermes-meta">${h.updatedAt ? `Atualizado em ${new Date(h.updatedAt).toLocaleString("pt-BR")}` : ""}</p>
         ${HERMES_STEPS.map(s => hermesStepCard(b, s)).join("")}
         ${cardActions}
       ` : `
@@ -1522,13 +1520,21 @@ async function importHermesPayload(file, b) {
   let contentChanged = false;
   for (const s of payload.steps) {
     const prev = existing && existing.steps && existing.steps[s.key];
-    const nextContent = s.content || "";
-    const nextArtifacts = s.artifacts || [];
-    const stepChanged = !!prev && (prev.content !== nextContent || JSON.stringify(prev.artifacts || []) !== JSON.stringify(nextArtifacts));
+    const nextContent = s.displayMarkdown || s.content || "";
+    const nextArtifacts = (s.technicalMetadata && s.technicalMetadata.artifacts) || s.artifacts || [];
+    const previousGenerated = prev && (prev.generatedMarkdown || prev.content || "");
+    const humanEdited = !!(prev && (prev.hasHumanEdit || prev.editedMarkdown));
+    const stepChanged = !!prev && (previousGenerated !== nextContent || JSON.stringify((prev.technicalMetadata && prev.technicalMetadata.artifacts) || prev.artifacts || []) !== JSON.stringify(nextArtifacts));
     contentChanged = contentChanged || stepChanged;
     const preserveReview = !!prev && !stepChanged && prev.status !== "sem_conteudo";
     steps[s.key] = {
-      content:    nextContent,
+      generatedMarkdown: nextContent,
+      editedMarkdown: humanEdited ? (prev.editedMarkdown || prev.displayMarkdown || prev.content || "") : "",
+      displayMarkdown: humanEdited ? (prev.editedMarkdown || prev.displayMarkdown || prev.content || "") : nextContent,
+      content: humanEdited ? (prev.editedMarkdown || prev.displayMarkdown || prev.content || "") : nextContent,
+      hasHumanEdit: humanEdited,
+      newVersionAvailable: humanEdited && stepChanged,
+      technicalMetadata: s.technicalMetadata || { artifacts: nextArtifacts },
       artifacts:  nextArtifacts,
       status:     preserveReview ? prev.status : (nextContent ? "rascunho" : "sem_conteudo"),
       notes:      prev ? (prev.notes || "") : "",
@@ -1574,9 +1580,12 @@ async function saveHermesStep(b, key, status) {
   const notes = note ? note.value : ((h.steps[key] || {}).notes || "");
   const response = document.querySelector(`.hermes-response[data-hstep="${key}"]`);
   const previous = h.steps[key] || {};
+  const editedMarkdown = response ? response.value : (previous.displayMarkdown || previous.content || "");
   const next = {
     ...previous,
-    status, notes, content: response ? response.value : (previous.content || ""),
+    status, notes, editedMarkdown, displayMarkdown: editedMarkdown, content: editedMarkdown,
+    hasHumanEdit: editedMarkdown !== (previous.generatedMarkdown || ""),
+    newVersionAvailable: false,
     updatedAt: nowIso(),
     history: [...(previous.history || []), { action: "manual", from: previous.status || null, to: status, notes, at: nowIso() }],
     ...(["aprovado", "aprovado_com_ressalvas"].includes(status) ? { approvedAt: nowIso() } : {}),
