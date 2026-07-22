@@ -67,6 +67,10 @@ assert.match(edge, /timingSafeEqual/);
 assert.match(edge, /upsert_briefing_hermes/);
 assert.match(edge, /project_identity_mismatch/);
 assert.match(edge, /lastIdempotencyKey/);
+assert.match(edge, /unrelatedResultPreserved/);
+assert.match(edge, /verifiedStepCount/);
+assert.match(edge, /verifiedContentMatches/);
+assert.match(edge, /verification_failed/);
 assert.doesNotMatch(edge, /console\.(?:log|error).*secret/i);
 
 const admin = fs.readFileSync(path.join(__dirname, '../admin.js'), 'utf8');

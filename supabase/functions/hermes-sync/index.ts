@@ -62,6 +62,25 @@ function merge(existing: any, payload: any) {
   };
 }
 
+function withoutHermes(result: any) {
+  const copy = { ...(result || {}) };
+  delete copy.hermes;
+  return copy;
+}
+
+function verification(result: any, beforeResult: any, payload: any) {
+  const hermes = result?.hermes;
+  const verifiedStepCount = hermes?.steps && typeof hermes.steps === "object" ? Object.keys(hermes.steps).length : 0;
+  const verifiedContentMatches = payload.steps.every((step: any) => hermes?.steps?.[step.key]?.generatedMarkdown === step.displayMarkdown);
+  return {
+    verifiedStepCount,
+    verifiedContentMatches,
+    verifiedCardTitle: hermes?.cardTitle || null,
+    verifiedProjectSlug: hermes?.projectSlug || null,
+    unrelatedResultPreserved: JSON.stringify(withoutHermes(result)) === JSON.stringify(withoutHermes(beforeResult)),
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method !== "POST") return reply(405, { error: "method_not_allowed" });
   if (Number(req.headers.get("content-length") || 0) > 5 * 1024 * 1024) return reply(413, { error: "payload_too_large" });
@@ -80,9 +99,13 @@ Deno.serve(async (req) => {
   if (readError || !row) return reply(404, { error: "briefing_not_found" });
   const current = row.result?.hermes || null;
   if (current?.projectSlug && current.projectSlug !== payload.projectSlug) return reply(409, { error: "project_identity_mismatch" });
-  if (payload.idempotencyKey && current?.lastIdempotencyKey === payload.idempotencyKey) return reply(200, { synced: true, idempotent: true, briefingId, steps: payload.steps.length, updatedAt: current.updatedAt });
+  if (payload.idempotencyKey && current?.lastIdempotencyKey === payload.idempotencyKey) return reply(200, { synced: true, idempotent: true, briefingId, steps: payload.steps.length, updatedAt: current.updatedAt, ...verification(row.result, row.result, payload) });
   const hermes = merge(current, payload); hermes.lastIdempotencyKey = payload.idempotencyKey || null;
   const { error: rpcError } = await supabase.rpc("upsert_briefing_hermes", { p_briefing_id: briefingId, p_hermes: hermes, p_expected_updated_at: current?.updatedAt || "__absent__" });
   if (rpcError) return reply(409, { error: "sync_conflict" });
-  return reply(200, { synced: true, idempotent: false, briefingId, steps: payload.steps.length, updatedAt: hermes.updatedAt });
+  const { data: verifiedRow, error: verifyError } = await supabase.from("briefings").select("result").eq("id", briefingId).single();
+  if (verifyError || !verifiedRow) return reply(500, { error: "verification_failed" });
+  const proof = verification(verifiedRow.result, row.result, payload);
+  if (proof.verifiedStepCount !== payload.steps.length || !proof.verifiedContentMatches || proof.verifiedProjectSlug !== payload.projectSlug || !proof.unrelatedResultPreserved) return reply(500, { error: "verification_failed" });
+  return reply(200, { synced: true, idempotent: false, briefingId, steps: payload.steps.length, updatedAt: hermes.updatedAt, ...proof });
 });
